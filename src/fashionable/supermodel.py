@@ -96,14 +96,14 @@ class Supermodel(Model):
                     logger.debug("Using old %s(%s)", cls.__name__, id_)
                     model = cls._old_models[id_]
                 else:
-                    logger.debug("Waiting for new {}({})", cls.__name__, id_)
+                    logger.debug("Waiting for new %s(%s)", cls.__name__, id_)
                     model = await cls._refresh_tasks[id_]
             except TimeoutError:
                 logger.error("Getting %s(%s) timed out", cls.__name__, id_)
                 model = cls._old_models.get(id_)
             except OSError as err:
                 logger.error(
-                    "Getting %s(%s) failed: {}",
+                    "Getting %s(%s) failed: %s",
                     cls.__name__,
                     id_,
                     err,
