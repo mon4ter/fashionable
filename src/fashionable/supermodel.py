@@ -76,7 +76,7 @@ class Supermodel(Model):
     async def create(cls, raw: dict):
         model = cls(**raw)
         await cls._create(dict(model))
-        logger.info("Created %s", repr(model))
+        logger.info("Created %r", model)
         cls._cache(model._id(), model)
         return model
 
@@ -132,13 +132,13 @@ class Supermodel(Model):
 
             raise
         else:
-            logger.info("Updated %s", repr(self))
+            logger.info("Updated %r", self)
             self._cache(id_, self)
 
     async def delete(self):
         id_ = self._id()
         await self._delete(id_)
-        logger.info("Deleted %s", repr(self))
+        logger.info("Deleted %r", self)
         self._cache(id_)
 
     @classmethod
