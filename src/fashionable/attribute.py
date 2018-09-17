@@ -1,7 +1,7 @@
 from typing import Any
 
 
-from . import UNSET
+from .unset import UNSET
 
 __all__ = [
     'Attribute',

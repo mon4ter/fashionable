@@ -1,6 +1,6 @@
 from collections import OrderedDict
 
-from . import UNSET
+from .unset import UNSET
 from .attribute import Attribute
 
 __all__ = [
@@ -14,18 +14,13 @@ class _ModelMeta(type):
         return OrderedDict()
 
     def __new__(mcs, name, bases, namespace):
-        attributes = []
-
-        for base in bases:
-            if issubclass(base, Model):
-                attributes.extend(base.attributes)
+        slots = []
 
         for attr_name, attr in namespace.copy().items():
             if attr.__class__ is not Attribute:
                 continue
 
-            # Zero makes attr inaccessible directly and keeps attr name interned
-            private_name = '0' + attr_name
+            private_name = '_p_' + attr_name
 
             def getter(self, pn=private_name):
                 return getattr(self, pn, None)
@@ -65,28 +60,28 @@ class _ModelMeta(type):
                 setattr(self, pn, value)
 
             namespace[attr_name] = property(getter, setter)
-            attributes.append(attr_name)
+            slots.append(private_name)
 
-        namespace['attributes'] = attributes
+        namespace['__slots__'] = tuple(slots)
         return super().__new__(mcs, name, bases, namespace)
 
 
 class Model(metaclass=_ModelMeta):
-    attributes = []
-
     def __init__(self, *args, **kwargs):
-        for attr, value in zip(self.attributes, args):
+        attributes = [a[3:] for a in self.__slots__]
+
+        for attr, value in zip(attributes, args):
             kwargs.setdefault(attr, value)
 
-        for attr in self.attributes:
+        for attr in attributes:
             setattr(self, attr, kwargs.get(attr, UNSET))
 
     def __iter__(self):
-        for attr in self.attributes:
-            value = getattr(self, '0' + attr)
+        for attr in self.__slots__:
+            value = getattr(self, attr)
 
             if value is not UNSET:
-                yield attr, value
+                yield attr[3:], value
 
     def __str__(self):
         return '{}({})'.format(self.__class__.__name__, self._id())

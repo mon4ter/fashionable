@@ -2,7 +2,7 @@ from asyncio import get_event_loop, sleep
 from logging import getLogger
 from typing import Optional
 
-from . import UNSET
+from .unset import UNSET
 from .model import Model
 
 __all__ = [
@@ -118,15 +118,16 @@ class Supermodel(Model):
     async def update(self, raw: dict):
         id_ = self._id()
         backup = dict(self)
+        attributes = [a[3:] for a in self.__slots__]
 
-        for attr in self.attributes:
+        for attr in attributes:
             if attr in raw:
                 setattr(self, attr, raw[attr])
 
         try:
             await self._update(id_, dict(self))
         except Exception:
-            for attr in self.attributes:
+            for attr in attributes:
                 setattr(self, attr, backup.get(attr))
 
             raise
