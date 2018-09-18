@@ -60,7 +60,11 @@ async def project_get(request, id_):
 @app.post('/project')
 async def project_create(request):
     project = await Project.create(request.json)
-    return json(dict(project), status=201, headers={'Location': '/project/' + project.id})
+    return json(
+        dict(project),
+        status=201,
+        headers={'Location': '/project/' + project.id},
+    )
 
 
 @app.put('/project/<id_>')

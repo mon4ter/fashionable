@@ -118,16 +118,15 @@ class Supermodel(Model):
     async def update(self, raw: dict):
         id_ = self._id()
         backup = dict(self)
-        attributes = [a[3:] for a in self.__slots__]
 
-        for attr in attributes:
+        for attr in self._attributes:
             if attr in raw:
                 setattr(self, attr, raw[attr])
 
         try:
             await self._update(id_, dict(self))
         except Exception:
-            for attr in attributes:
+            for attr in self._attributes:
                 setattr(self, attr, backup.get(attr))
 
             raise

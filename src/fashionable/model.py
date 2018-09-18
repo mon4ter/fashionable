@@ -15,6 +15,7 @@ class _ModelMeta(type):
 
     def __new__(mcs, name, bases, namespace):
         slots = []
+        attributes = []
 
         for attr_name, attr in namespace.copy().items():
             if attr.__class__ is not Attribute:
@@ -61,27 +62,28 @@ class _ModelMeta(type):
 
             namespace[attr_name] = property(getter, setter)
             slots.append(private_name)
+            attributes.append(attr_name)
 
         namespace['__slots__'] = tuple(slots)
-        return super().__new__(mcs, name, bases, namespace)
+        klass = super().__new__(mcs, name, bases, namespace)
+        klass._attributes = getattr(klass, '_attributes', ()) + tuple(attributes)
+        return klass
 
 
 class Model(metaclass=_ModelMeta):
     def __init__(self, *args, **kwargs):
-        attributes = [a[3:] for a in self.__slots__]
-
-        for attr, value in zip(attributes, args):
+        for attr, value in zip(self._attributes, args):
             kwargs.setdefault(attr, value)
 
-        for attr in attributes:
+        for attr in self._attributes:
             setattr(self, attr, kwargs.get(attr, UNSET))
 
     def __iter__(self):
-        for attr in self.__slots__:
-            value = getattr(self, attr)
+        for attr in self._attributes:
+            value = getattr(self, '_p_' + attr)
 
             if value is not UNSET:
-                yield attr[3:], value
+                yield attr, value
 
     def __str__(self):
         return '{}({})'.format(self.__class__.__name__, self._id())
