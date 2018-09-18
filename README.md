@@ -59,7 +59,7 @@ async def project_get(request, id_):
 
 @app.post('/project')
 async def project_create(request):
-    project = await Project.create(request.json)
+    project = await Project.create(**request.json)
     return json(
         dict(project),
         status=201,
@@ -70,7 +70,7 @@ async def project_create(request):
 @app.put('/project/<id_>')
 async def project_update(request, id_):
     project = await Project.get(id_)
-    await project.update(request.json)
+    await project.update(**request.json)
     return json(dict(project))
 
 

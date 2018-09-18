@@ -24,7 +24,7 @@ class _ModelMeta(type):
             private_name = '_p_' + attr_name
 
             def getter(self, pn=private_name):
-                return getattr(self, pn, None)
+                return getattr(self, pn)
 
             def setter(self, value, n=name, a=attr, an=attr_name, pn=private_name):
                 if value is UNSET:
@@ -80,9 +80,9 @@ class Model(metaclass=_ModelMeta):
 
     def __iter__(self):
         for attr in self._attributes:
-            value = getattr(self, '_p_' + attr)
+            value = getattr(self, attr)
 
-            if value is not UNSET:
+            if value is not None:
                 yield attr, value
 
     def __str__(self):

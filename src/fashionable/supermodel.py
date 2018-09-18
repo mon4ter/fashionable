@@ -73,8 +73,8 @@ class Supermodel(Model):
         raise NotImplementedError
 
     @classmethod
-    async def create(cls, raw: dict):
-        model = cls(**raw)
+    async def create(cls, *args, **kwargs):
+        model = cls(*args, **kwargs)
         await cls._create(dict(model))
         logger.info("Created %r", model)
         cls._cache(model._id(), model)
@@ -115,7 +115,7 @@ class Supermodel(Model):
 
         return model
 
-    async def update(self, raw: dict):
+    async def update(self, **raw: dict):
         id_ = self._id()
         backup = dict(self)
 
