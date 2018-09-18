@@ -2,7 +2,6 @@ from asyncio import get_event_loop, sleep
 from logging import getLogger
 from typing import Optional
 
-from .unset import UNSET
 from .model import Model
 
 __all__ = [
@@ -21,7 +20,7 @@ class Supermodel(Model):
     ttl = None
 
     @classmethod
-    def _cache(cls, id_: str, model: Optional[Model]=UNSET):
+    def _cache(cls, id_: str, model: Optional[Model]=None, reset: bool=True):
         if id_ in cls._models:
             del cls._models[id_]
 
@@ -34,7 +33,7 @@ class Supermodel(Model):
         if id_ in cls._refresh_tasks:
             del cls._refresh_tasks[id_]
 
-        if model is not UNSET:
+        if reset:
             if cls.ttl:
                 cls._expire_tasks[id_] = get_event_loop().create_task(cls._expire(id_))
 
@@ -138,7 +137,7 @@ class Supermodel(Model):
         id_ = self._id()
         await self._delete(id_)
         logger.info("Deleted %r", self)
-        self._cache(id_)
+        self._cache(id_, reset=False)
 
     @classmethod
     def close(cls):

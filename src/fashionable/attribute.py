@@ -1,8 +1,5 @@
 from typing import Any
 
-
-from .unset import UNSET
-
 __all__ = [
     'Attribute',
 ]
@@ -10,27 +7,30 @@ __all__ = [
 
 class Attribute:
     # noinspection PyShadowingBuiltins
-    def __init__(self, type: type=UNSET, *,
-                 default: Any=UNSET, limit: int=UNSET, min: Any=UNSET, max: Any=UNSET):
-        self._type = UNSET
-        self._default = UNSET
-        self._limit = UNSET
-        self._min = UNSET
-        self._max = UNSET
+    def __init__(self, type: type=None, *,
+                 optional: bool=False, default: Any=None, limit: int=None, min: Any=None, max: Any=None):
+        self._type = None
+        self._optional = None
+        self._default = None
+        self._limit = None
+        self._min = None
+        self._max = None
 
-        if type is not UNSET:
+        if type is not None:
             self.type = type
 
-        if default is not UNSET:
+        self.optional = optional
+
+        if default is not None:
             self.default = default
 
-        if limit is not UNSET:
+        if limit is not None:
             self.limit = limit
 
-        if min is not UNSET:
+        if min is not None:
             self.min = min
 
-        if max is not UNSET:
+        if max is not None:
             self.max = max
 
     @property
@@ -45,6 +45,19 @@ class Attribute:
             raise TypeError(fmt % kwargs, fmt, kwargs)
 
         self._type = value
+
+    @property
+    def optional(self):
+        return self._optional
+
+    @optional.setter
+    def optional(self, value):
+        if not isinstance(value, bool):
+            fmt = "Invalid optional: must be bool, not %(value_type)s"
+            kwargs = {'value_type': value.__class__.__name__}
+            raise TypeError(fmt % kwargs, fmt, kwargs)
+
+        self._optional = value
 
     @property
     def limit(self):

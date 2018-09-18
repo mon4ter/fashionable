@@ -1,6 +1,5 @@
 from collections import OrderedDict
 
-from .unset import UNSET
 from .attribute import Attribute
 
 __all__ = [
@@ -27,15 +26,15 @@ class _ModelMeta(type):
                 return getattr(self, pn)
 
             def setter(self, value, n=name, a=attr, an=attr_name, pn=private_name):
-                if value is UNSET:
-                    if a.default is UNSET:
+                if value is None:
+                    if a.optional:
+                        value = a.default
+                    else:
                         fmt = "Invalid %(model)s: missing required attribute %(attr)s"
                         kwargs = {'model': n, 'attr': an}
                         raise ValueError(fmt % kwargs, fmt, kwargs)
-                    else:
-                        value = a.default
                 else:
-                    if a.type is not UNSET and not isinstance(value, a.type):
+                    if a.type is not None and not isinstance(value, a.type):
                         try:
                             value = a.type(value)
                         except (TypeError, ValueError) as exc:
@@ -43,17 +42,17 @@ class _ModelMeta(type):
                             kwargs = {'model': n, 'attr': an}
                             raise ValueError(fmt % kwargs, fmt, kwargs) from exc
 
-                    if a.limit is not UNSET and len(value) > a.limit:
+                    if a.limit is not None and len(value) > a.limit:
                         fmt = "Invalid %(model)s: attribute %(attr)s is too long. Max length: %(limit)d"
                         kwargs = {'model': n, 'attr': an, 'limit': a.limit}
                         raise ValueError(fmt % kwargs, fmt, kwargs)
 
-                    if a.min is not UNSET and value < a.min:
+                    if a.min is not None and value < a.min:
                         fmt = "Invalid %(model)s: attribute %(attr)s should be >= %(min)d"
                         kwargs = {'model': n, 'attr': an, 'min': a.min}
                         raise ValueError(fmt % kwargs, fmt, kwargs)
 
-                    if a.max is not UNSET and value > a.max:
+                    if a.max is not None and value > a.max:
                         fmt = "Invalid %(model)s: attribute %(attr)s should be <= %(max)d"
                         kwargs = {'model': n, 'attr': an, 'max': a.max}
                         raise ValueError(fmt % kwargs, fmt, kwargs)
@@ -76,7 +75,7 @@ class Model(metaclass=_ModelMeta):
             kwargs.setdefault(attr, value)
 
         for attr in self._attributes:
-            setattr(self, attr, kwargs.get(attr, UNSET))
+            setattr(self, attr, kwargs.get(attr))
 
     def __iter__(self):
         for attr in self._attributes:
