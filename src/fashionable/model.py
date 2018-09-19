@@ -4,6 +4,7 @@ from .attribute import Attribute
 
 __all__ = [
     'Model',
+    'InvalidModelError',
 ]
 
 
@@ -30,32 +31,45 @@ class _ModelMeta(type):
                     if a.optional:
                         value = a.default
                     else:
-                        fmt = "Invalid %(model)s: missing required attribute %(attr)s"
-                        kwargs = {'model': n, 'attr': an}
-                        raise ValueError(fmt % kwargs, fmt, kwargs)
+                        raise InvalidModelError(
+                            "Invalid %(model)s: missing required attribute %(attr)s",
+                            model=n,
+                            attr=an,
+                        )
                 else:
                     if a.type is not None and not isinstance(value, a.type):
                         try:
                             value = a.type(value)
                         except (TypeError, ValueError) as exc:
-                            fmt = "Invalid %(model)s: invalid attribute %(attr)s"
-                            kwargs = {'model': n, 'attr': an}
-                            raise ValueError(fmt % kwargs, fmt, kwargs) from exc
+                            raise InvalidModelError(
+                                "Invalid %(model)s: invalid attribute %(attr)s",
+                                model=n,
+                                attr=an,
+                            ) from exc
 
                     if a.limit is not None and len(value) > a.limit:
-                        fmt = "Invalid %(model)s: attribute %(attr)s is too long. Max length: %(limit)d"
-                        kwargs = {'model': n, 'attr': an, 'limit': a.limit}
-                        raise ValueError(fmt % kwargs, fmt, kwargs)
+                        raise InvalidModelError(
+                            "Invalid %(model)s: attribute %(attr)s is too long. Max length: %(limit)d",
+                            model=n,
+                            attr=an,
+                            limit=a.limit,
+                        )
 
                     if a.min is not None and value < a.min:
-                        fmt = "Invalid %(model)s: attribute %(attr)s should be >= %(min)d"
-                        kwargs = {'model': n, 'attr': an, 'min': a.min}
-                        raise ValueError(fmt % kwargs, fmt, kwargs)
+                        raise InvalidModelError(
+                            "Invalid %(model)s: attribute %(attr)s should be >= %(min)d",
+                            model=n,
+                            attr=an,
+                            min=a.min,
+                        )
 
                     if a.max is not None and value > a.max:
-                        fmt = "Invalid %(model)s: attribute %(attr)s should be <= %(max)d"
-                        kwargs = {'model': n, 'attr': an, 'max': a.max}
-                        raise ValueError(fmt % kwargs, fmt, kwargs)
+                        raise ValueError(
+                            "Invalid %(model)s: attribute %(attr)s should be <= %(max)d",
+                            model=n,
+                            attr=an,
+                            max=a.max,
+                        )
 
                 setattr(self, pn, value)
 
@@ -92,3 +106,10 @@ class Model(metaclass=_ModelMeta):
 
     def _id(self):
         return next(iter(self))[1]
+
+
+class InvalidModelError(Exception):
+    def __init__(self, fmt, **kwargs):
+        super().__init__(fmt % kwargs)
+        self.fmt = fmt
+        self.kwargs = kwargs
