@@ -69,14 +69,14 @@ async def project_create(request):
 
 @app.put('/project/<id_>')
 async def project_update(request, id_):
-    project = await Project.get(id_)
+    project = await Project.get(id_, fresh=True)
     await project.update(**request.json)
     return json(dict(project))
 
 
 @app.delete('/project/<id_>')
 async def project_delete(request, id_):
-    project = await Project.get(id_)
+    project = await Project.get(id_, fresh=True)
     await project.delete()
     return HTTPResponse(status=204)
 

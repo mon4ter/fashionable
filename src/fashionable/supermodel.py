@@ -1,4 +1,4 @@
-from asyncio import get_event_loop, sleep
+from asyncio import get_event_loop
 from logging import getLogger
 from typing import Optional
 
@@ -14,7 +14,7 @@ logger = getLogger(__name__)
 class Supermodel(Model):
     _models = {}
     _old_models = {}
-    _expire_tasks = {}
+    _expire_handles = {}
     _refresh_tasks = {}
 
     ttl = None
@@ -27,22 +27,22 @@ class Supermodel(Model):
         if id_ in cls._old_models:
             del cls._old_models[id_]
 
-        if id_ in cls._expire_tasks:
-            cls._expire_tasks[id_].cancel()
+        if id_ in cls._expire_handles:
+            cls._expire_handles[id_].cancel()
+            del cls._expire_handles[id_]
 
         if id_ in cls._refresh_tasks:
             del cls._refresh_tasks[id_]
 
         if reset:
             if cls.ttl:
-                cls._expire_tasks[id_] = get_event_loop().create_task(cls._expire(id_))
+                logger.debug("Creating expire %s(%s)", cls.__name__, id_)
+                cls._expire_handles[id_] = get_event_loop().call_later(cls.ttl, cls._expire, id_)
 
             cls._models[id_] = model
 
     @classmethod
-    async def _expire(cls, id_: str):
-        await sleep(cls.ttl)
-
+    def _expire(cls, id_: str):
         if id_ in cls._models:
             logger.debug("%s(%s) expired", cls.__name__, id_)
             cls._old_models[id_] = cls._models.pop(id_)
@@ -80,7 +80,7 @@ class Supermodel(Model):
         return model
 
     @classmethod
-    async def get(cls, id_: str) -> Optional[Model]:
+    async def get(cls, id_: str, fresh: bool=False) -> Optional[Model]:
         try:
             model = cls._models[id_]
         except KeyError:
@@ -91,7 +91,7 @@ class Supermodel(Model):
                     cls._refresh_tasks[id_] = get_event_loop().create_task(cls._refresh(id_))
                     logger.debug("Created refresh %s(%s)", cls.__name__, id_)
 
-                if id_ in cls._old_models:
+                if not fresh and id_ in cls._old_models:
                     logger.debug("Using old %s(%s)", cls.__name__, id_)
                     model = cls._old_models[id_]
                 else:
@@ -141,8 +141,8 @@ class Supermodel(Model):
 
     @classmethod
     def close(cls):
-        for task in cls._expire_tasks.values():
-            task.cancel()
+        for handle in cls._expire_handles.values():
+            handle.cancel()
 
         for task in cls._refresh_tasks.values():
             task.cancel()
