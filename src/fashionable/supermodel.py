@@ -75,42 +75,27 @@ class Supermodel(Model):
     async def create(cls, *args, **kwargs):
         model = cls(*args, **kwargs)
         await cls._create(dict(model))
-        logger.info("Created %r", model)
         cls._cache(model._id(), model)
         return model
 
     @classmethod
     async def get(cls, id_: str, fresh: bool=False) -> Optional[Model]:
-        try:
+        if id_ in cls._models:
+            logger.debug("%s(%s) hit", cls.__name__, id_)
             model = cls._models[id_]
-        except KeyError:
+        else:
             logger.debug("%s(%s) miss", cls.__name__, id_)
 
-            try:
-                if id_ not in cls._refresh_tasks:
-                    cls._refresh_tasks[id_] = get_event_loop().create_task(cls._refresh(id_))
-                    logger.debug("Created refresh %s(%s)", cls.__name__, id_)
+            if id_ not in cls._refresh_tasks:
+                cls._refresh_tasks[id_] = get_event_loop().create_task(cls._refresh(id_))
+                logger.debug("Created refresh %s(%s)", cls.__name__, id_)
 
-                if not fresh and id_ in cls._old_models:
-                    logger.debug("Using old %s(%s)", cls.__name__, id_)
-                    model = cls._old_models[id_]
-                else:
-                    logger.debug("Waiting for new %s(%s)", cls.__name__, id_)
-                    model = await cls._refresh_tasks[id_]
-            except TimeoutError:
-                logger.error("Getting %s(%s) timed out", cls.__name__, id_)
-                model = cls._old_models.get(id_)
-            except OSError as err:
-                logger.error(
-                    "Getting %s(%s) failed: %s",
-                    cls.__name__,
-                    id_,
-                    err,
-                    exc_info=err,
-                )
-                model = cls._old_models.get(id_)
-        else:
-            logger.debug("%s(%s) hit", cls.__name__, id_)
+            if not fresh and id_ in cls._old_models:
+                logger.debug("Using old %s(%s)", cls.__name__, id_)
+                model = cls._old_models[id_]
+            else:
+                logger.debug("Waiting for new %s(%s)", cls.__name__, id_)
+                model = await cls._refresh_tasks[id_]
 
         return model
 
@@ -129,14 +114,12 @@ class Supermodel(Model):
                 setattr(self, attr, backup.get(attr))
 
             raise
-        else:
-            logger.info("Updated %r", self)
-            self._cache(id_, self)
+
+        self._cache(id_, self)
 
     async def delete(self):
         id_ = self._id()
         await self._delete(id_)
-        logger.info("Deleted %r", self)
         self._cache(id_, reset=False)
 
     @classmethod
