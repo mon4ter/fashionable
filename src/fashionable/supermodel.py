@@ -2,22 +2,45 @@ from asyncio import get_event_loop
 from logging import getLogger
 from typing import Optional
 
-from .model import Model
+from .model import Model, ModelMeta
 
 __all__ = [
+    'logger',
+    'SupermodelMeta',
     'Supermodel',
 ]
 
 logger = getLogger(__name__)
 
 
-class Supermodel(Model):
+class SupermodelMeta(ModelMeta):
+    @property
+    def _ttl(self):
+        return self._s_ttl
+
+    @_ttl.setter
+    def _ttl(self, value):
+        if value is None or isinstance(value, (int, float)):
+            self._s_ttl = value
+        else:
+            raise TypeError("Invalid _ttl: must be int or float, not {}".format(value.__class__.__name__))
+
+    def __new__(mcs, name, bases, namespace):
+        ttl = namespace.pop('_ttl', 'notset')
+        klass = super().__new__(mcs, name, bases, namespace)
+
+        if ttl != 'notset':
+            klass._ttl = ttl
+
+        return klass
+
+
+class Supermodel(Model, metaclass=SupermodelMeta):
+    _s_ttl = None
     _models = {}
     _old_models = {}
     _expire_handles = {}
     _refresh_tasks = {}
-
-    ttl = None
 
     @classmethod
     def _cache(cls, id_: str, model: Optional[Model]=None, reset: bool=True):
@@ -35,9 +58,9 @@ class Supermodel(Model):
             del cls._refresh_tasks[id_]
 
         if reset:
-            if cls.ttl:
+            if cls._ttl:
                 logger.debug("Creating expire %s(%s)", cls.__name__, id_)
-                cls._expire_handles[id_] = get_event_loop().call_later(cls.ttl, cls._expire, id_)
+                cls._expire_handles[id_] = get_event_loop().call_later(cls._ttl, cls._expire, id_)
 
             cls._models[id_] = model
 
@@ -87,8 +110,8 @@ class Supermodel(Model):
             logger.debug("%s(%s) miss", cls.__name__, id_)
 
             if id_ not in cls._refresh_tasks:
+                logger.debug("Creating refresh %s(%s)", cls.__name__, id_)
                 cls._refresh_tasks[id_] = get_event_loop().create_task(cls._refresh(id_))
-                logger.debug("Created refresh %s(%s)", cls.__name__, id_)
 
             if not fresh and id_ in cls._old_models:
                 logger.debug("Using old %s(%s)", cls.__name__, id_)

@@ -52,7 +52,7 @@ class Attribute:
     def limit(self, value):
         if value is not None:
             if not isinstance(value, int):
-                raise TypeError("Invalid limit: must be a int, not {}".format(value.__class__.__name__))
+                raise TypeError("Invalid limit: must be int, not {}".format(value.__class__.__name__))
 
             if value < 0:
                 raise ValueError("Invalid limit: should be >= 0")

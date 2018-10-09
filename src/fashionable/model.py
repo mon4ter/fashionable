@@ -3,12 +3,13 @@ from collections import OrderedDict
 from .attribute import Attribute
 
 __all__ = [
+    'ModelMeta',
     'Model',
     'InvalidModelError',
 ]
 
 
-class _ModelMeta(type):
+class ModelMeta(type):
     @classmethod
     def __prepare__(mcs, name, bases, **kwargs):
         return OrderedDict()
@@ -21,7 +22,7 @@ class _ModelMeta(type):
             if attr.__class__ is not Attribute:
                 continue
 
-            private_name = '_p_' + attr_name
+            private_name = '_m_' + attr_name
 
             def getter(self, pn=private_name):
                 return getattr(self, pn)
@@ -83,7 +84,7 @@ class _ModelMeta(type):
         return klass
 
 
-class Model(metaclass=_ModelMeta):
+class Model(metaclass=ModelMeta):
     def __init__(self, *args, **kwargs):
         for attr, value in zip(self._attributes, args):
             kwargs.setdefault(attr, value)

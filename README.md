@@ -28,6 +28,7 @@ app = Sanic()
 app.db = ...
 
 class Project(Supermodel):
+    _ttl = 300
     id = Attribute(str, limit=32)
     name = Attribute(str)
     organization = Attribute(str, default=None)
