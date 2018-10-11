@@ -1,12 +1,13 @@
 from asyncio import get_event_loop
 from logging import getLogger
-from typing import Optional
+from typing import Optional, AsyncIterator
 
 from .model import Model, ModelMeta
 
 __all__ = [
     'logger',
     'SupermodelMeta',
+    'SupermodelIterator',
     'Supermodel',
 ]
 
@@ -33,6 +34,24 @@ class SupermodelMeta(ModelMeta):
             klass._ttl = ttl
 
         return klass
+
+
+class SupermodelIterator:
+    def __init__(self, model, iterator):
+        self.model = model
+        self.iterator = iterator
+        self.iterable = None
+
+    def __aiter__(self):
+        self.iterable = self.iterator.__aiter__()
+        return self
+
+    async def __anext__(self):
+        raw = await self.iterable.__anext__()
+        model = self.model(**raw)
+        # noinspection PyProtectedMember
+        self.model._cache(model._id(), model)
+        return model
 
 
 class Supermodel(Model, metaclass=SupermodelMeta):
@@ -87,6 +106,10 @@ class Supermodel(Model, metaclass=SupermodelMeta):
         raise NotImplementedError
 
     @staticmethod
+    async def _scout(**kwargs) -> AsyncIterator[dict]:
+        raise NotImplementedError
+
+    @staticmethod
     async def _update(id_: str, raw: dict):
         raise NotImplementedError
 
@@ -121,6 +144,10 @@ class Supermodel(Model, metaclass=SupermodelMeta):
                 model = await cls._refresh_tasks[id_]
 
         return model
+
+    @classmethod
+    async def scout(cls, **kwargs) -> AsyncIterator[Model]:
+        return SupermodelIterator(cls, await cls._scout(**kwargs))
 
     async def update(self, **raw: dict):
         id_ = self._id()
