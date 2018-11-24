@@ -58,15 +58,15 @@ class ModelMeta(type):
 
                     if a.min is not None and value < a.min:
                         raise InvalidModelError(
-                            "Invalid %(model)s: attribute %(attr)s should be >= %(min)d",
+                            "Invalid %(model)s: attribute %(attr)s should be >= %(min)s",
                             model=n,
                             attr=an,
                             min=a.min,
                         )
 
                     if a.max is not None and value > a.max:
-                        raise ValueError(
-                            "Invalid %(model)s: attribute %(attr)s should be <= %(max)d",
+                        raise InvalidModelError(
+                            "Invalid %(model)s: attribute %(attr)s should be <= %(max)s",
                             model=n,
                             attr=an,
                             max=a.max,
