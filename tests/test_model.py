@@ -106,6 +106,7 @@ def test_limit():
 
     assert 'too long' in str(exc.value)
     assert 'foo' in str(exc.value)
+    assert 'M' in str(exc.value)
     assert str(limit) in str(exc.value)
 
 
@@ -120,6 +121,7 @@ def test_min():
 
     assert '>=' in str(exc.value)
     assert 'foo' in str(exc.value)
+    assert 'M' in str(exc.value)
     assert min_ in str(exc.value)
 
     try:
@@ -154,6 +156,7 @@ def test_max():
 
     assert '<=' in str(exc.value)
     assert 'foo' in str(exc.value)
+    assert 'M' in str(exc.value)
     assert max_ in str(exc.value)
 
 

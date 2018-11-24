@@ -1,12 +1,12 @@
-from .attribute import Attribute
-from .model import InvalidModelError, Model
+from .attribute import Attribute, InvalidModelError
+from .model import Model
 from .supermodel import Supermodel
 
-__version__ = '0.5.0'
+__version__ = '0.5.1'
 
 __all__ = [
     'Attribute',
-    'Model',
     'InvalidModelError',
+    'Model',
     'Supermodel',
 ]
