@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Optional, Type
 
 __all__ = [
     'Attribute',
@@ -8,8 +8,8 @@ __all__ = [
 
 class Attribute:
     # noinspection PyShadowingBuiltins
-    def __init__(self, type: type=None, *,
-                 optional: bool=False, default: Any=None, limit: int=None, min: Any=None, max: Any=None):
+    def __init__(self, type: Optional[Type]=None, *,
+                 optional: bool=False, default: Any=None, limit: Optional[int]=None, min: Any=None, max: Any=None):
         self._type = None
         self._optional = None
         self._limit = None
@@ -26,33 +26,33 @@ class Attribute:
         self.max = max
 
     @property
-    def type(self):
+    def type(self) -> Optional[Type]:
         return self._type
 
     @type.setter
-    def type(self, value):
+    def type(self, value: Optional[Type]):
         if value is not None and not isinstance(value, type):
             raise TypeError("Invalid type: must be a type, not {}".format(value.__class__.__name__))
 
         self._type = value
 
     @property
-    def optional(self):
+    def optional(self) -> bool:
         return self._optional
 
     @optional.setter
-    def optional(self, value):
-        if value is not None and not isinstance(value, bool):
+    def optional(self, value: bool):
+        if not isinstance(value, bool):
             raise TypeError("Invalid optional: must be bool, not {}".format(value.__class__.__name__))
 
         self._optional = value
 
     @property
-    def limit(self):
+    def limit(self) -> Optional[int]:
         return self._limit
 
     @limit.setter
-    def limit(self, value):
+    def limit(self, value: Optional[int]):
         if value is not None:
             if not isinstance(value, int):
                 raise TypeError("Invalid limit: must be int, not {}".format(value.__class__.__name__))
@@ -63,11 +63,11 @@ class Attribute:
         self._limit = value
 
     @property
-    def min(self):
+    def min(self) -> Any:
         return self._min
 
     @min.setter
-    def min(self, value):
+    def min(self, value: Any):
         if value is not None:
             try:
                 value < value
@@ -77,11 +77,11 @@ class Attribute:
         self._min = value
 
     @property
-    def max(self):
+    def max(self) -> Any:
         return self._max
 
     @max.setter
-    def max(self, value):
+    def max(self, value: Any):
         if value is not None:
             try:
                 value > value
@@ -91,16 +91,19 @@ class Attribute:
         self._max = value
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self._name
 
     @name.setter
-    def name(self, value):
+    def name(self, value: str):
+        if not isinstance(value, str):
+            raise TypeError("Invalid name: must be str, not {}".format(value.__class__.__name__))
+
         self._name = value
         self._private_name = '_m_' + value
 
     @property
-    def private_name(self):
+    def private_name(self) -> str:
         return self._private_name
 
     def __get__(self, instance, owner):
@@ -110,50 +113,50 @@ class Attribute:
         model = instance.__class__.__name__
 
         if value is None:
-            if self.optional:
+            if self._optional:
                 value = self.default
             else:
                 raise InvalidModelError(
                     "Invalid %(model)s: missing required attribute %(attr)s",
                     model=model,
-                    attr=self.name,
+                    attr=self._name,
                 )
         else:
-            if self.type is not None and not isinstance(value, self.type):
+            if self._type is not None and not isinstance(value, self._type):
                 try:
-                    value = self.type(value)
+                    value = self._type(value)
                 except (TypeError, ValueError) as exc:
                     raise InvalidModelError(
                         "Invalid %(model)s: invalid attribute %(attr)s",
                         model=model,
-                        attr=self.name,
+                        attr=self._name,
                     ) from exc
 
-            if self.limit is not None and len(value) > self.limit:
+            if self._limit is not None and len(value) > self._limit:
                 raise InvalidModelError(
                     "Invalid %(model)s: attribute %(attr)s is too long. Max length: %(limit)d",
                     model=model,
-                    attr=self.name,
-                    limit=self.limit,
+                    attr=self._name,
+                    limit=self._limit,
                 )
 
-            if self.min is not None and value < self.min:
+            if self._min is not None and value < self._min:
                 raise InvalidModelError(
                     "Invalid %(model)s: attribute %(attr)s should be >= %(min)s",
                     model=model,
-                    attr=self.name,
-                    min=self.min,
+                    attr=self._name,
+                    min=self._min,
                 )
 
-            if self.max is not None and value > self.max:
+            if self._max is not None and value > self._max:
                 raise InvalidModelError(
                     "Invalid %(model)s: attribute %(attr)s should be <= %(max)s",
                     model=model,
-                    attr=self.name,
-                    max=self.max,
+                    attr=self._name,
+                    max=self._max,
                 )
 
-        setattr(instance, self.private_name, value)
+        setattr(instance, self._private_name, value)
 
 
 class InvalidModelError(Exception):

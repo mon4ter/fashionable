@@ -3,6 +3,14 @@ from pytest import raises
 from fashionable import Attribute
 
 
+def test_name():
+    name = 'a'
+    a = Attribute()
+    a.name = name
+    assert a.name == name
+    assert a.private_name == '_m_' + name
+
+
 def test_without_parameters():
     a = Attribute()
     assert a.type is None
@@ -13,14 +21,14 @@ def test_without_parameters():
     assert a.max is None
 
 
-def test_type_validation():
+def test_type():
     with raises(TypeError):
         Attribute('123')
 
     assert Attribute(str).type == str
 
 
-def test_optional_validation():
+def test_optional():
     with raises(TypeError):
         Attribute(optional='yes')
 
