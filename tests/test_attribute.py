@@ -23,6 +23,7 @@ def test_without_parameters():
 
 def test_type():
     with raises(TypeError):
+        # noinspection PyTypeChecker
         Attribute('123')
 
     assert Attribute(str).type == str
@@ -30,6 +31,7 @@ def test_type():
 
 def test_optional():
     with raises(TypeError):
+        # noinspection PyTypeChecker
         Attribute(optional='yes')
 
     assert Attribute(optional=True).optional is True
@@ -41,6 +43,7 @@ def test_default():
 
 def test_limit():
     with raises(TypeError):
+        # noinspection PyTypeChecker
         Attribute(limit=0.5)
 
     with raises(ValueError):

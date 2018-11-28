@@ -13,13 +13,25 @@ def test_attributes():
 
 def test_attributes_inheritance():
     class M1(Model):
-        a = Attribute()
-        b = Attribute()
+        q = Attribute()
+        w = Attribute()
 
     class M2(M1):
-        c = Attribute()
+        e = Attribute()
 
-    assert M2._attributes == ('a', 'b', 'c')
+    class M3(M2):
+        r = Attribute()
+
+    class M4(M2):
+        w = Attribute()
+
+    class M5(M3):
+        w = Attribute()
+
+    assert M2._attributes == ('q', 'w', 'e')
+    assert M3._attributes == ('q', 'w', 'e', 'r')
+    assert M4._attributes == ('q', 'w', 'e')
+    assert M5._attributes == ('q', 'w', 'e', 'r')
 
 
 def test_getter_setter():
@@ -193,3 +205,28 @@ def test_repr():
 
     assert repr(M('a', 123)) == "M(foo='a', bar=123)"
     assert repr(M('a')) == "M(foo='a')"
+
+
+def test_mixin():
+    class B:
+        def __bool__(self):
+            return False
+
+    class M(Model, B):
+        a = Attribute()
+        b = Attribute()
+
+    assert M._attributes == ('a', 'b')
+    assert bool(M(1, 2)) is False
+
+
+def test_override():
+    class M1(Model):
+        a = Attribute(str)
+        b = Attribute(str)
+
+    class M2(M1):
+        b = Attribute(int)
+
+    assert M1('a', 1).b == '1'
+    assert M2('a', '1').b == 1

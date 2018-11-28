@@ -13,9 +13,11 @@ class ModelMeta(type):
     def __prepare__(mcs, name, bases, **kwargs):
         return OrderedDict()
 
-    def __new__(mcs, name, bases, namespace):
+    def __init__(cls, name, bases, namespace):
+        super().__init__(name, bases, namespace)
+
         slots = []
-        attributes = []
+        attributes = [a for k in bases for a in getattr(k, '_attributes', ())]
 
         for attr_name, attr in namespace.items():
             if not isinstance(attr, Attribute):
@@ -23,12 +25,12 @@ class ModelMeta(type):
 
             attr.name = attr_name
             slots.append(attr.private_name)
-            attributes.append(attr.name)
 
-        namespace['__slots__'] = tuple(slots)
-        klass = super().__new__(mcs, name, bases, namespace)
-        klass._attributes = getattr(klass, '_attributes', ()) + tuple(attributes)
-        return klass
+            if attr.name not in attributes:
+                attributes.append(attr.name)
+
+        cls.__slots__ = tuple(slots)
+        cls._attributes = tuple(attributes)
 
 
 class Model(metaclass=ModelMeta):
