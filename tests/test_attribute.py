@@ -26,7 +26,8 @@ def test_type():
         # noinspection PyTypeChecker
         Attribute('123')
 
-    assert Attribute(str).type == str
+    assert Attribute(str).type == (str,)
+    assert Attribute(tuple, list).type == (tuple, list)
 
 
 def test_optional():

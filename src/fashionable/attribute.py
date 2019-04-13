@@ -1,4 +1,4 @@
-from typing import Any, Optional, Type
+from typing import Any, Mapping, Optional, Tuple, Type, Union
 
 __all__ = [
     'Attribute',
@@ -8,8 +8,9 @@ __all__ = [
 
 class Attribute:
     # noinspection PyShadowingBuiltins
-    def __init__(self, type: Optional[Type]=None, *,
-                 optional: bool=False, default: Any=None, limit: Optional[int]=None, min: Any=None, max: Any=None):
+    def __init__(self, *type: Optional[Union[Tuple[Type], Type]],
+                 optional: bool = False, default: Any = None, limit: Optional[int] = None,
+                 min: Any = None, max: Any = None):
         self._type = None
         self._optional = None
         self._limit = None
@@ -18,7 +19,7 @@ class Attribute:
         self._name = None
         self._private_name = None
 
-        self.type = type
+        self.type = type or None
         self.optional = optional
         self.default = default
         self.limit = limit
@@ -30,9 +31,15 @@ class Attribute:
         return self._type
 
     @type.setter
-    def type(self, value: Optional[Type]):
-        if value is not None and not isinstance(value, type):
-            raise TypeError("Invalid type: must be a type, not {}".format(value.__class__.__name__))
+    def type(self, value: Optional[Union[Tuple[Type], Type]]):
+        if value is not None:
+            if not isinstance(value, tuple):
+                value = value,
+
+            if not all(isinstance(t, type) for t in value):
+                raise TypeError(
+                    "Invalid type: must be a type or tuple of types, not {}".format(value.__class__.__name__)
+                )
 
         self._type = value
 
@@ -122,15 +129,31 @@ class Attribute:
                     attr=self._name,
                 )
         else:
-            if self._type is not None and not isinstance(value, self._type):
-                try:
-                    value = self._type(value)
-                except (TypeError, ValueError) as exc:
+            if self._type is not None:
+                for typ in self._type:
+                    if isinstance(value, typ):
+                        break
+
+                    try:
+                        value = typ(value)
+                    except (TypeError, ValueError, InvalidModelError):
+                        try:
+                            if isinstance(value, Mapping):
+                                value = typ(**value)
+                            else:
+                                value = typ(*value)
+                        except (TypeError, ValueError):
+                            pass
+                        else:
+                            break
+                    else:
+                        break
+                else:
                     raise InvalidModelError(
                         "Invalid %(model)s: invalid attribute %(attr)s",
                         model=model,
                         attr=self._name,
-                    ) from exc
+                    )
 
             if self._limit is not None and len(value) > self._limit:
                 raise InvalidModelError(

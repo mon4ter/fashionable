@@ -66,6 +66,7 @@ async def test_get():
 
         @staticmethod
         async def _get(id_: str):
+            if id_ == 'f':
                 return {'a': 'f', 'b': 123}
 
     s1 = await S1.get('f')

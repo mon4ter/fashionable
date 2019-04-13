@@ -62,7 +62,7 @@ class Supermodel(Model, metaclass=SupermodelMeta):
     _refresh_tasks = {}
 
     @classmethod
-    def _cache(cls, id_: str, model: Optional[Model]=None, reset: bool=True):
+    def _cache(cls, id_: str, model: Optional[Model] = None, reset: bool = True):
         if id_ in cls._models:
             del cls._models[id_]
 
@@ -125,7 +125,7 @@ class Supermodel(Model, metaclass=SupermodelMeta):
         return model
 
     @classmethod
-    async def get(cls, id_: str, fresh: bool=False) -> Optional[Model]:
+    async def get(cls, id_: str, fresh: bool = False) -> Optional[Model]:
         if id_ in cls._models:
             logger.debug("%s(%s) hit", cls.__name__, id_)
             model = cls._models[id_]

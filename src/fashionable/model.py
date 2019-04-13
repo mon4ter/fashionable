@@ -46,7 +46,7 @@ class Model(metaclass=ModelMeta):
             value = getattr(self, attr)
 
             if value is not None:
-                yield attr, value
+                yield attr, dict(value) if isinstance(value, Model) else value
 
     def __str__(self):
         return '{}({})'.format(self.__class__.__name__, self._id())

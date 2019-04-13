@@ -53,17 +53,25 @@ def test_invalid_model_error():
 
 
 def test_type():
-    class M(Model):
+    class M1(Model):
         foo = Attribute(int)
 
-    assert M(1).foo == 1
-    assert M('1').foo == 1
+    assert M1(1).foo == 1
+    assert M1('1').foo == 1
 
     with raises(InvalidModelError) as exc:
-        M('a')
+        M1('a')
 
     assert 'invalid' in str(exc.value)
     assert 'foo' in str(exc.value)
+
+    class M2(Model):
+        foo = Attribute(bool, int)
+
+    assert M2(True).foo is True
+    assert M2(0).foo == 0
+    assert M2('').foo is False
+    assert M2('0').foo is True
 
 
 def test_optional():
@@ -173,12 +181,18 @@ def test_max():
 
 
 def test_iter():
-    class M(Model):
+    class M1(Model):
         foo = Attribute()
         bar = Attribute(optional=True)
 
-    assert dict(M('a', 'b')) == {'foo': 'a', 'bar': 'b'}
-    assert dict(M('a')) == {'foo': 'a'}
+    assert dict(M1('a', 'b')) == {'foo': 'a', 'bar': 'b'}
+    assert dict(M1('a')) == {'foo': 'a'}
+
+    class M2(Model):
+        m = Attribute(M1)
+        baz = Attribute()
+
+    assert dict(M2(M1('1'), '2')) == {'m': {'foo': '1'}, 'baz': '2'}
 
 
 def test_id():
@@ -230,3 +244,32 @@ def test_override():
 
     assert M1('a', 1).b == '1'
     assert M2('a', '1').b == 1
+
+
+def test_nested():
+    class M1(Model):
+        a = Attribute()
+        b = Attribute()
+
+    class M2(Model):
+        x = Attribute(M1)
+        y = Attribute(M1)
+
+    m11 = M1(1, 2)
+    m12 = M1(3, 4)
+
+    m21 = M2(m11, m12)
+    assert m21.x == m11
+    assert m21.y == m12
+
+    m22 = M2([1, 2], [3, 4])
+    assert m22.x.a == 1
+    assert m22.x.b == 2
+    assert m22.y.a == 3
+    assert m22.y.b == 4
+
+    m23 = M2({'b': 2, 'a': 1}, {'b': 4, 'a': 3})
+    assert m23.x.a == 1
+    assert m23.x.b == 2
+    assert m23.y.a == 3
+    assert m23.y.b == 4
