@@ -273,3 +273,21 @@ def test_nested():
     assert m23.x.b == 2
     assert m23.y.a == 3
     assert m23.y.b == 4
+
+
+def test_unknown_attribute_ignorance():
+    class M(Model):
+        a = Attribute()
+        b = Attribute()
+
+    assert dict(M(3, 4, 5)) == {'a': 3, 'b': 4}
+    assert dict(M(a=5, c=6, b=7, d=7)) == {'a': 5, 'b': 7}
+
+
+def test_case_insensitivity():
+    class M(Model):
+        someAttr = Attribute()
+        OTHER_ATTR = Attribute()
+
+    assert dict(M(someattr='1', other_attr='2')) == {'someAttr': '1', 'OTHER_ATTR': '2'}
+    assert dict(M(SOMEATTR='3', OtHeR_aTtR='4')) == {'someAttr': '3', 'OTHER_ATTR': '4'}

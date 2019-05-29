@@ -38,8 +38,10 @@ class Model(metaclass=ModelMeta):
         for attr, value in zip(self._attributes, args):
             kwargs.setdefault(attr, value)
 
+        lower_kwargs = {k.lower(): v for k, v in kwargs.items()}
+
         for attr in self._attributes:
-            setattr(self, attr, kwargs.get(attr))
+            setattr(self, attr, kwargs.get(attr, lower_kwargs.get(attr.lower())))
 
     def __iter__(self):
         for attr in self._attributes:
