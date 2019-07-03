@@ -1,12 +1,7 @@
-from .attribute import Attribute, InvalidModelError
-from .model import Model
-from .supermodel import Supermodel
+from .attribute import *
+from .invalidmodelerror import *
+from .model import *
+from .supermodel import *
 
-__version__ = '0.7.0'
-
-__all__ = [
-    'Attribute',
-    'InvalidModelError',
-    'Model',
-    'Supermodel',
-]
+__version__ = '0.8.0'
+__all__ = list(globals())

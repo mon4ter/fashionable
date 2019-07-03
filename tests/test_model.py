@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pytest import raises, fail
 
 from fashionable import Attribute, Model, InvalidModelError
@@ -5,28 +7,28 @@ from fashionable import Attribute, Model, InvalidModelError
 
 def test_attributes():
     class M(Model):
-        a = Attribute()
-        b = Attribute()
+        a = Attribute(str)
+        b = Attribute(str)
 
     assert M._attributes == ('a', 'b')
 
 
 def test_attributes_inheritance():
     class M1(Model):
-        q = Attribute()
-        w = Attribute()
+        q = Attribute(str)
+        w = Attribute(str)
 
     class M2(M1):
-        e = Attribute()
+        e = Attribute(str)
 
     class M3(M2):
-        r = Attribute()
+        r = Attribute(str)
 
     class M4(M2):
-        w = Attribute()
+        w = Attribute(str)
 
     class M5(M3):
-        w = Attribute()
+        w = Attribute(str)
 
     assert M2._attributes == ('q', 'w', 'e')
     assert M3._attributes == ('q', 'w', 'e', 'r')
@@ -36,7 +38,7 @@ def test_attributes_inheritance():
 
 def test_getter_setter():
     class M(Model):
-        a = Attribute()
+        a = Attribute(str)
 
     assert M('a').a == 'a'
 
@@ -66,18 +68,18 @@ def test_type():
     assert 'foo' in str(exc.value)
 
     class M2(Model):
-        foo = Attribute(bool, int)
+        foo = Attribute(bool)
 
     assert M2(True).foo is True
-    assert M2(0).foo == 0
+    # assert M2(0).foo == 0
     assert M2('').foo is False
     assert M2('0').foo is True
 
 
 def test_optional():
     class M(Model):
-        foo = Attribute()
-        bar = Attribute(optional=True)
+        foo = Attribute(int)
+        bar = Attribute(Optional[int])
 
     try:
         M(1).bar
@@ -96,7 +98,7 @@ def test_default():
     default = 'bar'
 
     class M(Model):
-        foo = Attribute(optional=True, default=default)
+        foo = Attribute(Optional[str], default=default)
 
     assert M().foo == default
     assert M('not bar') != default
@@ -106,7 +108,7 @@ def test_limit():
     limit = 10
 
     class M(Model):
-        foo = Attribute(limit=limit)
+        foo = Attribute(str, limit=limit)
 
     try:
         v = 'a' * (limit - 1)
@@ -134,7 +136,7 @@ def test_min():
     min_ = 'AAAAAB'
 
     class M(Model):
-        foo = Attribute(min=min_)
+        foo = Attribute(str, min=min_)
 
     with raises(InvalidModelError) as exc:
         M('AAAAAA')
@@ -159,7 +161,7 @@ def test_max():
     max_ = 'FFFFFE'
 
     class M(Model):
-        foo = Attribute(max=max_)
+        foo = Attribute(str, max=max_)
 
     try:
         assert M('AAAAAA').foo == 'AAAAAA'
@@ -182,29 +184,29 @@ def test_max():
 
 def test_iter():
     class M1(Model):
-        foo = Attribute()
-        bar = Attribute(optional=True)
+        foo = Attribute(str)
+        bar = Attribute(Optional[str])
 
     assert dict(M1('a', 'b')) == {'foo': 'a', 'bar': 'b'}
     assert dict(M1('a')) == {'foo': 'a'}
 
     class M2(Model):
         m = Attribute(M1)
-        baz = Attribute()
+        baz = Attribute(str)
 
     assert dict(M2(M1('1'), '2')) == {'m': {'foo': '1'}, 'baz': '2'}
 
 
 def test_id():
     class M1(Model):
-        a = Attribute()
-        b = Attribute()
+        a = Attribute(int)
+        b = Attribute(int)
 
     assert str(M1(1, 2)) == 'M1(1)'
 
     class M2(Model):
-        a = Attribute()
-        b = Attribute()
+        a = Attribute(str)
+        b = Attribute(int)
 
         def _id(self):
             return repr(str(self.b))
@@ -214,8 +216,8 @@ def test_id():
 
 def test_repr():
     class M(Model):
-        foo = Attribute()
-        bar = Attribute(optional=True)
+        foo = Attribute(str)
+        bar = Attribute(Optional[int])
 
     assert repr(M('a', 123)) == "M(foo='a', bar=123)"
     assert repr(M('a')) == "M(foo='a')"
@@ -227,8 +229,8 @@ def test_mixin():
             return False
 
     class M(Model, B):
-        a = Attribute()
-        b = Attribute()
+        a = Attribute(int)
+        b = Attribute(int)
 
     assert M._attributes == ('a', 'b')
     assert bool(M(1, 2)) is False
@@ -248,8 +250,8 @@ def test_override():
 
 def test_nested():
     class M1(Model):
-        a = Attribute()
-        b = Attribute()
+        a = Attribute(int)
+        b = Attribute(int)
 
     class M2(Model):
         x = Attribute(M1)
@@ -277,8 +279,8 @@ def test_nested():
 
 def test_unknown_attribute_ignorance():
     class M(Model):
-        a = Attribute()
-        b = Attribute()
+        a = Attribute(int)
+        b = Attribute(int)
 
     assert dict(M(3, 4, 5)) == {'a': 3, 'b': 4}
     assert dict(M(a=5, c=6, b=7, d=7)) == {'a': 5, 'b': 7}
@@ -286,8 +288,8 @@ def test_unknown_attribute_ignorance():
 
 def test_case_insensitivity():
     class M(Model):
-        someAttr = Attribute()
-        OTHER_ATTR = Attribute()
+        someAttr = Attribute(str)
+        OTHER_ATTR = Attribute(str)
 
     assert dict(M(someattr='1', other_attr='2')) == {'someAttr': '1', 'OTHER_ATTR': '2'}
     assert dict(M(SOMEATTR='3', OtHeR_aTtR='4')) == {'someAttr': '3', 'OTHER_ATTR': '4'}

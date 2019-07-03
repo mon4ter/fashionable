@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pytest import mark
 
 from fashionable import Attribute, Supermodel
@@ -6,7 +8,7 @@ from fashionable import Attribute, Supermodel
 # noinspection PyAbstractClass
 def test_supermodel():
     class S(Supermodel):
-        a = Attribute()
+        a = Attribute(int)
 
     assert S(1).a == 1
 
@@ -14,7 +16,7 @@ def test_supermodel():
 # noinspection PyAbstractClass
 def test_ttl():
     class S1(Supermodel):
-        a = Attribute()
+        a = Attribute(int)
 
     class S2(S1):
         _ttl = 5
@@ -23,7 +25,7 @@ def test_ttl():
         _ttl = 10
 
     class S4(S2):
-        b = Attribute()
+        b = Attribute(int)
 
     assert S1._ttl is None
     assert S2._ttl == 5
@@ -36,7 +38,7 @@ def test_ttl():
 async def test_create():
     class S1(Supermodel):
         a = Attribute(str)
-        b = Attribute(int, optional=True)
+        b = Attribute(Optional[int])
 
         @staticmethod
         async def _create(raw: dict):
@@ -58,7 +60,7 @@ async def test_create():
 async def test_get():
     class S1(Supermodel):
         a = Attribute(str)
-        b = Attribute(int, optional=True)
+        b = Attribute(Optional[int])
 
         @staticmethod
         async def _create(raw: dict):
