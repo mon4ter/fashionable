@@ -111,9 +111,7 @@ class Attribute:
 
             raise InvalidModelError(err, model=model, attr=self._name)
 
-        print(repr(value))
         if value is None:
-            print('use default')
             value = self.default
 
         if self._limit is not None and len(value) > self._limit:

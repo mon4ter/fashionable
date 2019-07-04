@@ -1,6 +1,9 @@
 from collections import OrderedDict
+from typing import Iterable, Mapping, Tuple, Union
 
 from .attribute import Attribute
+from .invalidmodelerror import InvalidModelError
+from .validate import validate
 
 __all__ = [
     'ModelMeta',
@@ -49,6 +52,15 @@ class Model(metaclass=ModelMeta):
 
             if value is not None:
                 yield attr, dict(value) if isinstance(value, Model) else value
+
+    def __eq__(self, other: Union['Model', Mapping, Iterable, Tuple]):
+        if not isinstance(other, Model):
+            try:
+                other = validate(self.__class__, other)
+            except InvalidModelError:
+                return NotImplemented
+
+        return dict(self) == dict(other)
 
     def __str__(self):
         return '{}({})'.format(self.__class__.__name__, self._id())
