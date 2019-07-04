@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 
 from pytest import raises, fail
 
@@ -275,6 +275,21 @@ def test_nested():
     assert m23.x.b == 2
     assert m23.y.a == 3
     assert m23.y.b == 4
+
+
+def test_list_of_models():
+    class M1(Model):
+        a = Attribute(int)
+        b = Attribute(int)
+
+    class M2(Model):
+        x = Attribute(int)
+        m1s = Attribute(List[M1])
+
+    m21 = M2(5, [M1(1, 2), M1(3, 4)])
+    m22 = M2('6', (['9', '8'], ['7', '6']))
+    assert m21.m1s == [M1(1, 2), M1(3, 4)]
+    assert m22.m1s == [M1(9, 8), M1(7, 6)]
 
 
 def test_unknown_attribute_ignorance():
