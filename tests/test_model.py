@@ -2,7 +2,7 @@ from typing import Optional, List
 
 from pytest import raises, fail
 
-from fashionable import Attribute, Model, InvalidModelError
+from fashionable import Attribute, Model, ModelError
 
 
 def test_attributes():
@@ -46,8 +46,8 @@ def test_getter_setter():
 def test_invalid_model_error():
     fmt = "Error %(a)s %(b)s"
 
-    with raises(InvalidModelError) as exc:
-        raise InvalidModelError(fmt, a='a', b='b')
+    with raises(ModelError) as exc:
+        raise ModelError(fmt, a='a', b='b')
 
     assert "Error a b" in str(exc.value)
     assert exc.value.fmt == fmt
@@ -61,7 +61,7 @@ def test_type():
     assert M1(1).foo == 1
     assert M1('1').foo == 1
 
-    with raises(InvalidModelError) as exc:
+    with raises(ModelError) as exc:
         M1('a')
 
     assert 'invalid' in str(exc.value)
@@ -83,10 +83,10 @@ def test_optional():
 
     try:
         M(1).bar
-    except InvalidModelError as exc:
+    except ModelError as exc:
         fail("Unexpected InvalidModelError {}".format(exc))
 
-    with raises(InvalidModelError) as exc:
+    with raises(ModelError) as exc:
         M()
 
     assert 'missing' in str(exc.value)
@@ -113,16 +113,16 @@ def test_limit():
     try:
         v = 'a' * (limit - 1)
         assert M(v).foo == v
-    except InvalidModelError as exc:
+    except ModelError as exc:
         fail("Unexpected InvalidModelError {}".format(exc))
 
     try:
         v = 'a' * limit
         assert M(v).foo == v
-    except InvalidModelError as exc:
+    except ModelError as exc:
         fail("Unexpected InvalidModelError {}".format(exc))
 
-    with raises(InvalidModelError) as exc:
+    with raises(ModelError) as exc:
         v = 'a' * (limit + 1)
         M(v)
 
@@ -138,7 +138,7 @@ def test_min():
     class M(Model):
         foo = Attribute(str, min=min_)
 
-    with raises(InvalidModelError) as exc:
+    with raises(ModelError) as exc:
         M('AAAAAA')
 
     assert '>=' in str(exc.value)
@@ -148,12 +148,12 @@ def test_min():
 
     try:
         assert M(min_).foo == min_
-    except InvalidModelError as exc:
+    except ModelError as exc:
         fail("Unexpected InvalidModelError {}".format(exc))
 
     try:
         assert M('FFFFFF').foo == 'FFFFFF'
-    except InvalidModelError as exc:
+    except ModelError as exc:
         fail("Unexpected InvalidModelError {}".format(exc))
 
 
@@ -165,15 +165,15 @@ def test_max():
 
     try:
         assert M('AAAAAA').foo == 'AAAAAA'
-    except InvalidModelError as exc:
+    except ModelError as exc:
         fail("Unexpected InvalidModelError {}".format(exc))
 
     try:
         assert M(max_).foo == max_
-    except InvalidModelError as exc:
+    except ModelError as exc:
         fail("Unexpected InvalidModelError {}".format(exc))
 
-    with raises(InvalidModelError) as exc:
+    with raises(ModelError) as exc:
         M('FFFFFF')
 
     assert '<=' in str(exc.value)

@@ -27,10 +27,11 @@ class SupermodelMeta(ModelMeta):
             raise TypeError("Invalid _ttl: must be int or float, not {}".format(value.__class__.__name__))
 
     def __new__(mcs, name, bases, namespace):
-        ttl = namespace.pop('_ttl', 'notset')
+        notset = object()
+        ttl = namespace.pop('_ttl', notset)
         klass = super().__new__(mcs, name, bases, namespace)
 
-        if ttl != 'notset':
+        if ttl is not notset:
             klass._ttl = ttl
 
         return klass

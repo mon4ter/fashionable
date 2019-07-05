@@ -1,8 +1,10 @@
-from typing import List, Optional, Tuple, Set, Union, Dict
+from typing import Dict, List, NewType, Optional, Set, Tuple, Union
 
 from pytest import mark
 
 from fashionable.validate import validate
+
+Bool = NewType('Bool', bool)
 
 
 @mark.parametrize('typ, value, result', [
@@ -22,15 +24,20 @@ from fashionable.validate import validate
     (Optional[int],                   None,                                   None),
     (Optional[Tuple[int, int, int]],  ['2', '2', '3'],                        (2, 2, 3)),
     (Optional[Tuple[int, int, int]],  None,                                   None),
-    (Union[bool, int],                True,                                   True),
-    (Union[bool, int],                1,                                      1),
-    (Union[bool, int],                '0',                                    False),
-    (Optional[Union[bool, int]],      '0',                                    False),
+    (Union[Bool, int],                True,                                   True),
+    (Union[Bool, int],                1,                                      1),
+    (Union[Bool, int],                '0',                                    True),
+    (Union[float, int, Bool],         1.0,                                    1.0),
+    (Union[float, int, Bool],         1,                                      1),
+    (Union[float, int, Bool],         True,                                   True),
+    (Union[float, int, Bool],         '1',                                    1.0),
+    (Union[float, int, Bool],         'a',                                    True),
+    (Optional[Union[Bool, int]],      '0',                                    True),
     (Dict[int, Tuple[int, int]],      {'1': ['1', '2'], '2': ['3', '4']},     {1: (1, 2), 2: (3, 4)}),
     (Dict[int, Tuple[int, int]],      [['1', ['1', '2']], ['2', ['3', '4']]], {1: (1, 2), 2: (3, 4)}),
-    (Tuple[int, str, Optional[bool]], ['2', '2', '3'],                        (2, '2', True)),
-    (Tuple[int, str, Optional[bool]], ['2', '2'],                             (2, '2', None)),
-    (Tuple[int, str, Optional[bool]], ['2', '2'],                             (2, '2', None)),
+    (Tuple[int, str, Optional[Bool]], ['2', '2', '3'],                        (2, '2', True)),
+    (Tuple[int, str, Optional[Bool]], ['2', '2'],                             (2, '2', None)),
+    (Tuple[int, str, Optional[Bool]], ['2', '2'],                             (2, '2', None)),
     (List[Tuple[int, int]],           [['1', '2'], ['3', '4']],               [(1, 2), (3, 4)]),
 ])
 def test_validate(typ, value, result):

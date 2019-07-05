@@ -1,6 +1,6 @@
 from typing import Any, Optional, Type, Union
 
-from .invalidmodelerror import InvalidModelError
+from .modelerror import ModelAttributeError, ModelError, ModelTypeError, ModelValueError
 from .validate import TypingMeta, validate
 
 __all__ = [
@@ -103,19 +103,27 @@ class Attribute:
 
         try:
             value = validate(self.type, value)
-        except (TypeError, ValueError, InvalidModelError):
+        except (TypeError, ValueError, ModelError) as exc:
             if value is None:
                 err = "Invalid %(model)s: missing required attribute %(attr)s"
+                err_type = ModelAttributeError
+            elif isinstance(exc, ValueError):
+                err = "Invalid %(model)s: invalid value of attribute %(attr)s"
+                err_type = ModelTypeError
+            elif isinstance(exc, TypeError):
+                err = "Invalid %(model)s: invalid type of attribute %(attr)s"
+                err_type = ModelTypeError
             else:
                 err = "Invalid %(model)s: invalid attribute %(attr)s"
+                err_type = ModelError
 
-            raise InvalidModelError(err, model=model, attr=self._name)
+            raise err_type(err, model=model, attr=self._name)
 
         if value is None:
             value = self.default
 
         if self._limit is not None and len(value) > self._limit:
-            raise InvalidModelError(
+            raise ModelValueError(
                 "Invalid %(model)s: attribute %(attr)s is too long. Max length: %(limit)d",
                 model=model,
                 attr=self._name,
@@ -123,16 +131,16 @@ class Attribute:
             )
 
         if self._min is not None and value < self._min:
-            raise InvalidModelError(
-                "Invalid %(model)s: attribute %(attr)s should be >= %(min)s",
+            raise ModelValueError(
+                "Invalid %(model)s: attribute %(attr)s: should be >= %(min)s",
                 model=model,
                 attr=self._name,
                 min=self._min,
             )
 
         if self._max is not None and value > self._max:
-            raise InvalidModelError(
-                "Invalid %(model)s: attribute %(attr)s should be <= %(max)s",
+            raise ModelValueError(
+                "Invalid %(model)s: attribute %(attr)s: should be <= %(max)s",
                 model=model,
                 attr=self._name,
                 max=self._max,

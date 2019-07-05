@@ -2,7 +2,7 @@ from collections import OrderedDict
 from typing import Iterable, Mapping, Tuple, Union
 
 from .attribute import Attribute
-from .invalidmodelerror import InvalidModelError
+from .modelerror import ModelError
 from .validate import validate
 
 __all__ = [
@@ -57,7 +57,7 @@ class Model(metaclass=ModelMeta):
         if not isinstance(other, Model):
             try:
                 other = validate(self.__class__, other)
-            except InvalidModelError:
+            except ModelError:
                 return NotImplemented
 
         return dict(self) == dict(other)

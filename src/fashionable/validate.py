@@ -1,8 +1,6 @@
 from functools import lru_cache
-from itertools import chain, repeat
+from itertools import chain, product, repeat
 from typing import Any, Iterable, Mapping, Tuple, Type, Union
-
-from .invalidmodelerror import InvalidModelError
 
 __all__ = [
     'TypingMeta',
@@ -29,14 +27,10 @@ def _isinstance(typ: Union[Type, TypingMeta], types: Union[TypingMeta, Tuple[Typ
 
 
 def _validate_union(typ: TypingMeta, value: Any) -> Any:
-    # Shortcut for Optional
-    if value is None and NoneType in typ.__args__:
-        return
-
-    for element_type in typ.__args__:
+    for convert, element_type in product((False, True), typ.__args__):
         try:
-            return validate(element_type, value)
-        except (TypeError, ValueError, InvalidModelError):
+            return validate(element_type, value, convert=convert)
+        except (TypeError, ValueError):
             pass
     else:
         raise
@@ -75,7 +69,10 @@ def _validate_tuple(typ: TypingMeta, tpl: Union[Tuple, Iterable]):
     return tuple_type(validate(et, e) for et, e in zip(typ.__args__, filled_tuple))
 
 
-def validate(typ: Union[Type, TypingMeta], value: Any) -> Any:
+def validate(typ: Union[Type, TypingMeta], value: Any, *, convert: bool = True) -> Any:
+    if hasattr(typ, '__supertype__'):
+        typ = typ.__supertype__
+
     if _isinstance(typ, Union):
         value = _validate_union(typ, value)
     elif _isinstance(typ, Mapping):
@@ -85,9 +82,12 @@ def validate(typ: Union[Type, TypingMeta], value: Any) -> Any:
     elif _isinstance(typ, Tuple):
         value = _validate_tuple(typ, value)
     elif not isinstance(value, typ):
+        if not convert:
+            raise TypeError
+
         try:
             value = typ(value)
-        except (TypeError, ValueError, InvalidModelError):
+        except (TypeError, ValueError):
             if isinstance(value, Mapping):
                 value = typ(**value)
             elif isinstance(value, (Iterable, tuple)):
