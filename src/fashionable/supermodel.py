@@ -1,6 +1,6 @@
 from asyncio import get_event_loop
 from logging import getLogger
-from typing import Optional, AsyncIterator
+from typing import Any, AsyncIterator, Optional
 
 from .model import Model, ModelMeta
 
@@ -63,7 +63,7 @@ class Supermodel(Model, metaclass=SupermodelMeta):
     _refresh_tasks = {}
 
     @classmethod
-    def _cache(cls, id_: str, model: Optional[Model] = None, reset: bool = True):
+    def _cache(cls, id_: Any, model: Optional[Model] = None, reset: bool = True):
         if id_ in cls._models:
             del cls._models[id_]
 
@@ -85,13 +85,13 @@ class Supermodel(Model, metaclass=SupermodelMeta):
             cls._models[id_] = model
 
     @classmethod
-    def _expire(cls, id_: str):
+    def _expire(cls, id_: Any):
         if id_ in cls._models:
             logger.debug("%s(%s) expired", cls.__name__, id_)
             cls._old_models[id_] = cls._models.pop(id_)
 
     @classmethod
-    async def _refresh(cls, id_: str):
+    async def _refresh(cls, id_: Any):
         raw = await cls._get(id_)
         model = cls(**raw) if raw else None
         cls._cache(id_, model)
@@ -103,7 +103,7 @@ class Supermodel(Model, metaclass=SupermodelMeta):
         raise NotImplementedError
 
     @staticmethod
-    async def _get(id_: str) -> Optional[dict]:
+    async def _get(id_: Any) -> Optional[dict]:
         raise NotImplementedError
 
     @staticmethod
@@ -111,11 +111,11 @@ class Supermodel(Model, metaclass=SupermodelMeta):
         raise NotImplementedError
 
     @staticmethod
-    async def _update(id_: str, raw: dict):
+    async def _update(id_: Any, raw: dict):
         raise NotImplementedError
 
     @staticmethod
-    async def _delete(id_: str):
+    async def _delete(id_: Any):
         raise NotImplementedError
 
     @classmethod
@@ -126,7 +126,7 @@ class Supermodel(Model, metaclass=SupermodelMeta):
         return model
 
     @classmethod
-    async def get(cls, id_: str, fresh: bool = False) -> Optional[Model]:
+    async def get(cls, id_: Any, fresh: bool = False) -> Optional[Model]:
         if id_ in cls._models:
             logger.debug("%s(%s) hit", cls.__name__, id_)
             model = cls._models[id_]
@@ -150,7 +150,7 @@ class Supermodel(Model, metaclass=SupermodelMeta):
     async def scout(cls, **kwargs) -> AsyncIterator[Model]:
         return SupermodelIterator(cls, await cls._scout(**kwargs))
 
-    async def update(self, **raw: dict):
+    async def update(self, **raw):
         id_ = self._id()
         backup = dict(self)
 
