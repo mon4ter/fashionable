@@ -1,4 +1,4 @@
-from typing import Dict, List, NewType, Optional, Set, Tuple, Union
+from typing import Dict, List, NewType, Optional, Set, Tuple, Union, Any
 
 from pytest import mark
 
@@ -39,6 +39,7 @@ Bool = NewType('Bool', bool)
     (Tuple[int, str, Optional[Bool]], ['2', '2'],                             (2, '2', None)),
     (Tuple[int, str, Optional[Bool]], ['2', '2'],                             (2, '2', None)),
     (List[Tuple[int, int]],           [['1', '2'], ['3', '4']],               [(1, 2), (3, 4)]),
+    (Any,                             [['1', '2'], ['3', '4']],               [['1', '2'], ['3', '4']]),
 ])
 def test_validate(typ, value, result):
     assert validate(typ, value) == result

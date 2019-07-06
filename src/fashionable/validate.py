@@ -7,7 +7,8 @@ __all__ = [
     'validate',
 ]
 
-TypingMeta = type(type(Any))
+AnyType = type(Any)
+TypingMeta = type(AnyType)
 NoneType = type(None)
 
 
@@ -33,7 +34,7 @@ def _validate_union(typ: TypingMeta, value: Any) -> Any:
         except (TypeError, ValueError):
             pass
     else:
-        raise
+        raise ValueError
 
 
 def _validate_mapping(typ: TypingMeta, mapping: Union[Mapping, Iterable]) -> Mapping:
@@ -73,7 +74,9 @@ def validate(typ: Union[Type, TypingMeta], value: Any, *, convert: bool = True) 
     if hasattr(typ, '__supertype__'):
         typ = typ.__supertype__
 
-    if _isinstance(typ, Union):
+    if isinstance(typ, AnyType):
+        pass
+    elif _isinstance(typ, Union):
         value = _validate_union(typ, value)
     elif _isinstance(typ, Mapping):
         value = _validate_mapping(typ, value)
