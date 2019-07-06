@@ -3,22 +3,24 @@ Decorate your project with some fashionable supermodels.
 
 ### Model example
 ```python
+from typing import List, Optional
+
 from fashionable import Attribute, Model
 
 
 class Project(Model):
     id = Attribute(str, limit=32)
     name = Attribute(str)
-    organization = Attribute(str, default=None)
-    domain = Attribute(str, default=None)
-    link = Attribute(str, default=None)
+    organization = Attribute(Optional[str])
+    domain = Attribute(Optional[str])
+    links = Attribute(Optional[List[str]])
     
 project = Project(1, 'Test')
 ```
 
 ### Supermodel example with Sanic
 ```python
-from typing import Optional
+from typing import List, Optional
 
 from fashionable import Attribute, Supermodel
 from sanic import Sanic
@@ -31,9 +33,9 @@ class Project(Supermodel):
     _ttl = 300
     id = Attribute(str, limit=32)
     name = Attribute(str)
-    organization = Attribute(str, default=None)
-    domain = Attribute(str, default=None)
-    link = Attribute(str, default=None)
+    organization = Attribute(Optional[str])
+    domain = Attribute(Optional[str])
+    links = Attribute(Optional[List[str]])
     
     @staticmethod
     async def _create(raw: dict):

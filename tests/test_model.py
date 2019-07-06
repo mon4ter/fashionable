@@ -1,6 +1,6 @@
-from typing import Optional, List
+from typing import List, Optional
 
-from pytest import raises, fail
+from pytest import fail, raises
 
 from fashionable import Attribute, Model, ModelError
 
@@ -34,6 +34,15 @@ def test_attributes_inheritance():
     assert M3._attributes == ('q', 'w', 'e', 'r')
     assert M4._attributes == ('q', 'w', 'e')
     assert M5._attributes == ('q', 'w', 'e', 'r')
+
+
+def test_validate():
+    class M(Model):
+        foo = Attribute(int)
+        bar = Attribute(str)
+
+    assert M._validate([4, '44']) == M(4, '44')
+    assert M._validate({'foo': 5, 'bar': '55'}) == M(5, '55')
 
 
 def test_getter_setter():

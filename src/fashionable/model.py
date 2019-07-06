@@ -37,6 +37,10 @@ class ModelMeta(type):
 
 
 class Model(metaclass=ModelMeta):
+    @classmethod
+    def _validate(cls, value: Union['Model', Mapping, Iterable, Tuple]) -> 'Model':
+        return validate(cls, value)
+
     def __init__(self, *args, **kwargs):
         for attr, value in zip(self._attributes, args):
             kwargs.setdefault(attr, value)
@@ -56,7 +60,7 @@ class Model(metaclass=ModelMeta):
     def __eq__(self, other: Union['Model', Mapping, Iterable, Tuple]):
         if not isinstance(other, Model):
             try:
-                other = validate(self.__class__, other)
+                other = self.__class__._validate(other)
             except ModelError:
                 return NotImplemented
 
