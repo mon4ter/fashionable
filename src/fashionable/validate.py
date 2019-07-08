@@ -2,14 +2,11 @@ from functools import lru_cache
 from itertools import chain, product, repeat
 from typing import Any, Iterable, Mapping, Tuple, Type, Union
 
+from .types import AnyType, TypingMeta
+
 __all__ = [
-    'TypingMeta',
     'validate',
 ]
-
-AnyType = type(Any)
-TypingMeta = type(AnyType)
-NoneType = type(None)
 
 
 @lru_cache()
@@ -27,17 +24,17 @@ def _isinstance(typ: Union[Type, TypingMeta], types: Union[TypingMeta, Tuple[Typ
     )
 
 
-def _validate_union(typ: TypingMeta, value: Any) -> Any:
-    for convert, element_type in product((False, True), typ.__args__):
+def _validate_union(typ: TypingMeta, value: Any, strict: bool) -> Any:
+    for strict, element_type in product(range(not strict, -1, -1), typ.__args__):
         try:
-            return validate(element_type, value, convert=convert)
+            return _validate(element_type, value, strict)
         except (TypeError, ValueError):
             pass
     else:
-        raise ValueError
+        raise TypeError
 
 
-def _validate_mapping(typ: TypingMeta, mapping: Union[Mapping, Iterable]) -> Mapping:
+def _validate_mapping(typ: TypingMeta, mapping: Union[Mapping, Iterable], strict: bool) -> Mapping:
     if not isinstance(mapping, (Mapping, Iterable)):
         raise TypeError
 
@@ -45,47 +42,47 @@ def _validate_mapping(typ: TypingMeta, mapping: Union[Mapping, Iterable]) -> Map
     key_type, value_type = typ.__args__
 
     return mapping_type(
-        (validate(key_type, k), validate(value_type, v))
+        (_validate(key_type, k, strict), _validate(value_type, v, strict))
         for k, v in (mapping.items() if isinstance(mapping, Mapping) else mapping)
     )
 
 
-def _validate_iterable(typ: TypingMeta, iterable: Iterable) -> Iterable:
+def _validate_iterable(typ: TypingMeta, iterable: Iterable, strict: bool) -> Iterable:
     if not isinstance(iterable, Iterable):
         raise TypeError
 
     iterable_type = typ.__extra__
     element_type = typ.__args__[0]
 
-    return iterable_type(validate(element_type, e) for e in iterable)
+    return iterable_type(_validate(element_type, e, strict) for e in iterable)
 
 
-def _validate_tuple(typ: TypingMeta, tpl: Union[Tuple, Iterable]):
+def _validate_tuple(typ: TypingMeta, tpl: Union[Tuple, Iterable], strict: bool):
     if not isinstance(tpl, (Tuple, Iterable)):
         raise TypeError
 
     tuple_type = typ.__extra__
     filled_tuple = chain(tpl, repeat(None))
 
-    return tuple_type(validate(et, e) for et, e in zip(typ.__args__, filled_tuple))
+    return tuple_type(_validate(et, e, strict) for et, e in zip(typ.__args__, filled_tuple))
 
 
-def validate(typ: Union[Type, TypingMeta], value: Any, *, convert: bool = True) -> Any:
+def _validate(typ: Union[Type, TypingMeta], value: Any, strict: bool) -> Any:
     if hasattr(typ, '__supertype__'):
         typ = typ.__supertype__
 
     if isinstance(typ, AnyType):
         pass
     elif _isinstance(typ, Union):
-        value = _validate_union(typ, value)
+        value = _validate_union(typ, value, strict)
     elif _isinstance(typ, Mapping):
-        value = _validate_mapping(typ, value)
+        value = _validate_mapping(typ, value, strict)
     elif _isinstance(typ, Iterable):
-        value = _validate_iterable(typ, value)
+        value = _validate_iterable(typ, value, strict)
     elif _isinstance(typ, Tuple):
-        value = _validate_tuple(typ, value)
+        value = _validate_tuple(typ, value, strict)
     elif not isinstance(value, typ):
-        if not convert:
+        if strict:
             raise TypeError
 
         try:
@@ -99,3 +96,10 @@ def validate(typ: Union[Type, TypingMeta], value: Any, *, convert: bool = True) 
                 raise
 
     return value
+
+
+def validate(typ: Union[Type, TypingMeta], value: Any, strict: bool) -> Any:
+    try:
+        return _validate(typ, value, strict)
+    except TypeError as err:
+        raise TypeError("must be {}, not {}".format(typ, type(value))) from err

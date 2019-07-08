@@ -1,7 +1,8 @@
 from typing import Any, Optional, Type, Union
 
 from .modelerror import ModelAttributeError, ModelError, ModelTypeError, ModelValueError
-from .validate import TypingMeta, validate
+from .types import TypingMeta
+from .validate import validate
 
 __all__ = [
     'Attribute',
@@ -10,9 +11,10 @@ __all__ = [
 
 class Attribute:
     # noinspection PyShadowingBuiltins
-    def __init__(self, type: Union[Type, TypingMeta],
-                 default: Any = None, limit: Optional[int] = None, min: Any = None, max: Any = None):
+    def __init__(self, type: Union[Type, TypingMeta], *, strict: Optional[bool] = None, default: Any = None,
+                 limit: Optional[int] = None, min: Any = None, max: Any = None):
         self._type = None
+        self._strict = None
         self._limit = None
         self._min = None
         self._max = None
@@ -20,6 +22,7 @@ class Attribute:
         self._private_name = None
 
         self.type = type
+        self.strict = strict
         self.default = default
         self.limit = limit
         self.min = min
@@ -32,9 +35,21 @@ class Attribute:
     @type.setter
     def type(self, value: Union[Type, TypingMeta]):
         if not isinstance(value, type) and not isinstance(type(value), TypingMeta):
-            raise TypeError("Invalid 'type': must be a type or TypingMeta, not {!r}".format(value))
+            raise TypeError("Invalid type: must be a type or TypingMeta, not {!r}".format(value))
 
         self._type = value
+
+    @property
+    def strict(self) -> bool:
+        return self._strict
+
+    @strict.setter
+    def strict(self, value: Optional[bool]):
+        if value is None:
+            value = False
+
+        if not isinstance(value, bool):
+            raise TypeError("Invalid strict: must be a bool, not {}".format(value.__class__.__name__))
 
     @property
     def limit(self) -> Optional[int]:
@@ -44,7 +59,7 @@ class Attribute:
     def limit(self, value: Optional[int]):
         if value is not None:
             if not isinstance(value, int):
-                raise TypeError("Invalid limit: must be int, not {}".format(value.__class__.__name__))
+                raise TypeError("Invalid limit: must be a int, not {}".format(value.__class__.__name__))
 
             if value < 0:
                 raise ValueError("Invalid limit: should be >= 0")
@@ -86,7 +101,7 @@ class Attribute:
     @name.setter
     def name(self, value: str):
         if not isinstance(value, str):
-            raise TypeError("Invalid name: must be str, not {}".format(value.__class__.__name__))
+            raise TypeError("Invalid name: must be a str, not {}".format(value.__class__.__name__))
 
         self._name = value
         self._private_name = '_m_' + value
@@ -102,7 +117,7 @@ class Attribute:
         model = instance.__class__.__name__
 
         try:
-            value = validate(self.type, value)
+            value = validate(self.type, value, self.strict)
         except (TypeError, ValueError, ModelError) as exc:
             if value is None:
                 err = "Invalid %(model)s: missing required attribute %(attr)s"

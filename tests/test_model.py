@@ -36,15 +36,6 @@ def test_attributes_inheritance():
     assert M5._attributes == ('q', 'w', 'e', 'r')
 
 
-def test_validate():
-    class M(Model):
-        foo = Attribute(int)
-        bar = Attribute(str)
-
-    assert M._validate([4, '44']) == M(4, '44')
-    assert M._validate({'foo': 5, 'bar': '55'}) == M(5, '55')
-
-
 def test_getter_setter():
     class M(Model):
         a = Attribute(str)
@@ -110,7 +101,7 @@ def test_default():
         foo = Attribute(Optional[str], default=default)
 
     assert M().foo == default
-    assert M('not bar') != default
+    assert M('not bar').foo != default
 
 
 def test_limit():
