@@ -25,7 +25,7 @@ def _isinstance(typ: Union[Type, TypingMeta], types: Union[TypingMeta, Tuple[Typ
 
 
 def _validate_union(typ: TypingMeta, value: Any, strict: bool) -> Any:
-    for strict, element_type in product(range(not strict, -1, -1), typ.__args__):
+    for strict, element_type in product(range(1, strict - 1, -1), typ.__args__):
         try:
             return _validate(element_type, value, strict)
         except (TypeError, ValueError):
@@ -98,7 +98,7 @@ def _validate(typ: Union[Type, TypingMeta], value: Any, strict: bool) -> Any:
     return value
 
 
-def validate(typ: Union[Type, TypingMeta], value: Any, strict: bool) -> Any:
+def validate(typ: Union[Type, TypingMeta], value: Any, strict: bool = False) -> Any:
     try:
         return _validate(typ, value, strict)
     except TypeError as err:

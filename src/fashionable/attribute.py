@@ -51,6 +51,8 @@ class Attribute:
         if not isinstance(value, bool):
             raise TypeError("Invalid strict: must be a bool, not {}".format(value.__class__.__name__))
 
+        self._strict = value
+
     @property
     def limit(self) -> Optional[int]:
         return self._limit

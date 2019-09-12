@@ -4,6 +4,7 @@ from pytest import mark
 
 from fashionable.validate import validate
 
+# Because Union[float, int, bool] shrinks to Union[float, int]
 Bool = NewType('Bool', bool)
 
 
