@@ -6,12 +6,15 @@ from .validate import validate
 
 __all__ = [
     'Attribute',
+    'UNSET',
 ]
+
+UNSET = object()
 
 
 class Attribute:
     # noinspection PyShadowingBuiltins
-    def __init__(self, type: Union[Type, TypingMeta], *, strict: Optional[bool] = None, default: Any = None,
+    def __init__(self, type: Union[Type, TypingMeta], *, strict: Optional[bool] = None, default: Any = UNSET,
                  limit: Optional[int] = None, min: Any = None, max: Any = None):
         self._type = None
         self._strict = None
@@ -117,11 +120,12 @@ class Attribute:
 
     def __set__(self, instance, value):
         model = instance.__class__.__name__
+        unset = value is UNSET
 
         try:
-            value = validate(self.type, value, self.strict)
+            value = validate(self.type, None if unset else value, self.strict)
         except (TypeError, ValueError, ModelError) as exc:
-            if value is None:
+            if unset:
                 err = "Invalid %(model)s: missing required attribute %(attr)s"
                 err_type = ModelAttributeError
             elif isinstance(exc, ValueError):
@@ -131,12 +135,13 @@ class Attribute:
                 err = "Invalid %(model)s: invalid type of attribute %(attr)s"
                 err_type = ModelTypeError
             else:
+                # TODO test invalid attribute
                 err = "Invalid %(model)s: invalid attribute %(attr)s"
                 err_type = ModelError
 
             raise err_type(err, model=model, attr=self._name)
 
-        if value is None:
+        if unset:
             value = self.default
 
         if self._limit is not None and len(value) > self._limit:
@@ -164,3 +169,7 @@ class Attribute:
             )
 
         setattr(instance, self._private_name, value)
+
+    # TODO test delete
+    def __delete__(self, instance):
+        self.__set__(instance, UNSET)

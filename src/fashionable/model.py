@@ -1,7 +1,7 @@
 from collections import OrderedDict
 from typing import Iterable, Mapping, Tuple, Union
 
-from .attribute import Attribute
+from .attribute import Attribute, UNSET
 from .modelerror import ModelError
 from .validate import validate
 
@@ -44,17 +44,18 @@ class Model(metaclass=ModelMeta):
         lower_kwargs = {k.lower(): v for k, v in kwargs.items()}
 
         for attr in self._attributes:
-            setattr(self, attr, kwargs.get(attr, lower_kwargs.get(attr.lower())))
+            setattr(self, attr, kwargs.get(attr, lower_kwargs.get(attr.lower(), UNSET)))
 
     def __iter__(self):
         for attr in self._attributes:
             value = getattr(self, attr)
 
-            if value is not None:
+            if value is not UNSET:
                 yield attr, dict(value) if isinstance(value, Model) else value
 
     def __eq__(self, other: Union['Model', Mapping, Iterable, Tuple]):
         if not isinstance(other, Model):
+            # TODO test compare with non-Model
             try:
                 other = validate(self, other, strict=False)
             except ModelError:
@@ -63,13 +64,16 @@ class Model(metaclass=ModelMeta):
         return dict(self) == dict(other)
 
     def __str__(self):
+        # TODO test str
         return '{}({})'.format(self.__class__.__name__, self._id())
 
     def __repr__(self):
+        # TODO test repr
         return '{}({})'.format(
             self.__class__.__name__,
             ', '.join('{}={!r}'.format(k, getattr(self, k)) for k, _ in self),
         )
 
     def _id(self):
+        # TODO test _id override
         return next(iter(self))[1]

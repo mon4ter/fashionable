@@ -31,11 +31,13 @@ def _validate_union(typ: TypingMeta, value: Any, strict: bool) -> Any:
         except (TypeError, ValueError):
             pass
     else:
+        # TODO test invalid Union
         raise TypeError
 
 
 def _validate_mapping(typ: TypingMeta, mapping: Union[Mapping, Iterable], strict: bool) -> Mapping:
     if not isinstance(mapping, (Mapping, Iterable)):
+        # TODO test invalid Mapping
         raise TypeError
 
     mapping_type = typ.__extra__
@@ -49,6 +51,7 @@ def _validate_mapping(typ: TypingMeta, mapping: Union[Mapping, Iterable], strict
 
 def _validate_iterable(typ: TypingMeta, iterable: Iterable, strict: bool) -> Iterable:
     if not isinstance(iterable, Iterable):
+        # TODO test invalid Iterable
         raise TypeError
 
     iterable_type = typ.__extra__

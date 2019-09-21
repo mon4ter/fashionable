@@ -1,8 +1,8 @@
 from typing import Any
 
-from pytest import raises
+from pytest import raises, mark
 
-from fashionable import Attribute
+from fashionable import Attribute, UNSET
 
 
 def test_name():
@@ -17,7 +17,7 @@ def test_name():
 def test_without_parameters():
     a = Attribute(Any)
     assert a.type is Any
-    assert a.default is None
+    assert a.default is UNSET
     assert a.limit is None
     assert a.min is None
     assert a.max is None
@@ -31,8 +31,9 @@ def test_type():
     assert Attribute(str).type == str
 
 
-def test_default():
-    assert Attribute(str, default='').default == ''
+@mark.parametrize('default', ['', None])
+def test_default(default):
+    assert Attribute(str, default=default).default == default
 
 
 def test_limit():
