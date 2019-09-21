@@ -308,3 +308,12 @@ def test_case_insensitivity():
 
     assert dict(M(someattr='1', other_attr='2')) == {'someAttr': '1', 'OTHER_ATTR': '2'}
     assert dict(M(SOMEATTR='3', OtHeR_aTtR='4')) == {'someAttr': '3', 'OTHER_ATTR': '4'}
+
+
+def test_implicit_none():
+    class M(Model):
+        a = Attribute(Optional[int])
+
+    assert dict(M(1)) == {'a': 1}
+    assert dict(M(None)) == {'a': None}
+    assert dict(M()) == {}
