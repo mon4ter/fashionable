@@ -14,7 +14,7 @@ setup(
     packages=['fashionable'],
     package_dir={'': 'src'},
     setup_requires=['pytest-runner'],
-    tests_require=['pytest', 'pytest-asyncio'],
+    tests_require=['pytest', 'pytest-asyncio', 'pytest-cov'],
     url='https://github.com/mon4ter/fashionable',
     license='MIT',
     author='Dmitry Galkin',
