@@ -1,7 +1,15 @@
 from functools import lru_cache
 from itertools import chain, product, repeat
-# noinspection PyProtectedMember
-from typing import Any, Dict, Iterable, List, Mapping, Set, Tuple, Union, _GenericAlias, _SpecialForm
+from sys import version_info
+from typing import Any, Dict, Iterable, List, Mapping, Set, Tuple, Union
+
+PY_37 = version_info >= (3, 7)
+
+try:
+    # noinspection PyProtectedMember,PyUnresolvedReferences
+    from typing import _GenericAlias, _SpecialForm
+except ImportError:
+    _GenericAlias = _SpecialForm = type(type(Any))
 
 __all__ = [
     'AnyType',
@@ -11,9 +19,17 @@ __all__ = [
 
 AnyType = Union[type, _SpecialForm, _GenericAlias]
 
+if PY_37:
+    def _get_origin(typ: AnyType) -> AnyType:
+        return typ.__origin__ if isinstance(typ, _GenericAlias) else typ
 
-def _get_origin(typ: AnyType) -> AnyType:
-    return typ.__origin__ if isinstance(typ, _GenericAlias) else typ
+    _get_extra = _get_origin
+else:
+    def _get_origin(typ: AnyType) -> AnyType:
+        return getattr(typ, '__origin__', typ)
+
+    def _get_extra(typ: AnyType) -> AnyType:
+        return getattr(typ, '__extra__', typ)
 
 
 @lru_cache()
@@ -22,7 +38,6 @@ def _isinstance(value: AnyType, types: Tuple[AnyType, ...]) -> bool:
         return False
 
     origin = _get_origin(value)
-
     return any(_get_origin(t) == origin for t in types)
 
 
@@ -42,7 +57,7 @@ def _validate_mapping(typ: AnyType, mapping: Union[Mapping, Iterable], strict: b
         # TODO test invalid Mapping
         raise TypeError
 
-    mapping_type = typ.__origin__
+    mapping_type = _get_extra(typ)
     key_type, value_type = typ.__args__
 
     return mapping_type(
@@ -56,7 +71,7 @@ def _validate_iterable(typ: AnyType, iterable: Iterable, strict: bool) -> Iterab
         # TODO test invalid Iterable
         raise TypeError
 
-    iterable_type = typ.__origin__
+    iterable_type = _get_extra(typ)
     element_type = typ.__args__[0]
 
     return iterable_type(_validate(element_type, e, strict) for e in iterable)
@@ -66,7 +81,7 @@ def _validate_tuple(typ: AnyType, tpl: Union[Tuple, Iterable], strict: bool):
     if not isinstance(tpl, (Tuple, Iterable)):
         raise TypeError
 
-    tuple_type = typ.__origin__
+    tuple_type = _get_extra(typ)
     filled_tuple = chain(tpl, repeat(None))
 
     return tuple_type(_validate(et, e, strict) for et, e in zip(typ.__args__, filled_tuple))
