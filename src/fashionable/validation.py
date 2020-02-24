@@ -28,7 +28,6 @@ def _isinstance(value: AnyType, types: Tuple[AnyType, ...]) -> bool:
 
 def _validate_union(typ: AnyType, value: Any, strict: bool) -> Any:
     for strict, element_type in product(range(1, strict - 1, -1), typ.__args__):
-        print(typ, value, strict, element_type)
         try:
             return _validate(element_type, value, strict)
         except (TypeError, ValueError):
@@ -105,7 +104,7 @@ def _validate(typ: AnyType, value: Any, strict: bool) -> Any:
 
 
 def is_type(typ: Any) -> bool:
-    return isinstance(typ, (type, _SpecialForm, _GenericAlias))
+    return isinstance(typ, AnyType.__args__)
 
 
 def validate(typ: AnyType, value: Any, strict: bool = False) -> Any:
