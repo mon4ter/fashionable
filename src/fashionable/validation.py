@@ -6,10 +6,12 @@ from typing import Any, Dict, Iterable, List, Mapping, Set, Tuple, Union
 PY_37 = version_info >= (3, 7)
 
 try:
-    # noinspection PyProtectedMember,PyUnresolvedReferences
+    # noinspection PyUnresolvedReferences, PyProtectedMember
     from typing import _GenericAlias, _SpecialForm
 except ImportError:
-    _GenericAlias = _SpecialForm = type(type(Any))
+    # noinspection PyUnresolvedReferences
+    from typing import TypingMeta
+    _GenericAlias = _SpecialForm = TypingMeta
 
 __all__ = [
     'AnyType',
