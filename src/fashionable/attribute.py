@@ -1,8 +1,7 @@
-from typing import Any, Optional, Type, Union
+from typing import Any, Optional
 
 from .modelerror import ModelAttributeError, ModelError, ModelTypeError, ModelValueError
-from .types import TypingMeta
-from .validation import validate
+from .validation import AnyType, is_type, validate
 
 __all__ = [
     'Attribute',
@@ -14,7 +13,7 @@ UNSET = object()
 
 class Attribute:
     # noinspection PyShadowingBuiltins
-    def __init__(self, type: Union[Type, TypingMeta], *, strict: Optional[bool] = None, default: Any = UNSET,
+    def __init__(self, type: AnyType, *, strict: Optional[bool] = None, default: Any = UNSET,
                  limit: Optional[int] = None, min: Any = None, max: Any = None):
         self._type = None
         self._strict = None
@@ -32,13 +31,13 @@ class Attribute:
         self.max = max
 
     @property
-    def type(self) -> Union[Type, TypingMeta]:
+    def type(self) -> AnyType:
         return self._type
 
     @type.setter
-    def type(self, value: Union[Type, TypingMeta]):
-        if not isinstance(value, type) and not isinstance(type(value), TypingMeta):
-            raise TypeError("Invalid type: must be a type or TypingMeta, not {!r}".format(value))
+    def type(self, value: AnyType):
+        if not is_type(value):
+            raise TypeError("Invalid type: must be a type, not {!r}".format(value))
 
         self._type = value
 
