@@ -2,7 +2,7 @@ from typing import Dict, List, NewType, Optional, Set, Tuple, Union, Any
 
 from pytest import mark
 
-from fashionable.validate import validate
+from fashionable import validate
 
 # Because Union[float, int, bool] shrinks to Union[float, int]
 Bool = NewType('Bool', bool)
@@ -43,4 +43,4 @@ Bool = NewType('Bool', bool)
     (Any,                             [['1', '2'], ['3', '4']],               [['1', '2'], ['3', '4']]),
 ])
 def test_validate(typ, value, result):
-    assert validate(typ, value, False) == result
+    assert validate(typ, value) == result

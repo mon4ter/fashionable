@@ -2,7 +2,7 @@ from typing import Any, Optional, Type, Union
 
 from .modelerror import ModelAttributeError, ModelError, ModelTypeError, ModelValueError
 from .types import TypingMeta
-from .validate import validate
+from .validation import validate
 
 __all__ = [
     'Attribute',

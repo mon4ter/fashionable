@@ -3,7 +3,7 @@ from typing import Iterable, Mapping, Tuple, Union
 
 from .attribute import Attribute, UNSET
 from .modelerror import ModelError
-from .validate import validate
+from .validation import validate
 
 __all__ = [
     'ModelMeta',
