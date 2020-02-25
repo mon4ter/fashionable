@@ -3,35 +3,30 @@ from itertools import chain, product, repeat
 from sys import version_info
 from typing import Any, Dict, Iterable, List, Mapping, Set, Tuple, Union
 
-PY_37 = version_info >= (3, 7)
-
-try:
-    # noinspection PyUnresolvedReferences, PyProtectedMember
-    from typing import _GenericAlias, _SpecialForm
-except ImportError:
-    # noinspection PyUnresolvedReferences
-    from typing import TypingMeta
-    _GenericAlias = _SpecialForm = TypingMeta
-
 __all__ = [
     'AnyType',
     'is_type',
     'validate',
 ]
 
-AnyType = Union[type, _SpecialForm, _GenericAlias]
-
-if PY_37:
-    def _get_origin(typ: AnyType) -> AnyType:
-        return typ.__origin__ if isinstance(typ, _GenericAlias) else typ
-
-    _get_extra = _get_origin
+if version_info >= (3, 7):
+    # noinspection PyUnresolvedReferences, PyProtectedMember
+    from typing import _GenericAlias, _SpecialForm
+    AnyType = Union[type, _SpecialForm, _GenericAlias]
+    _types = AnyType.__args__
 else:
-    def _get_origin(typ: AnyType) -> AnyType:
-        return getattr(typ, '__origin__', typ)
+    # noinspection PyUnresolvedReferences, PyProtectedMember
+    from typing import _TypingBase, Type, TypingMeta
+    _types = (type, _TypingBase, TypingMeta)
+    AnyType = Type
 
-    def _get_extra(typ: AnyType) -> AnyType:
-        return getattr(typ, '__extra__', typ)
+
+def _get_origin(typ: AnyType) -> AnyType:
+    return getattr(typ, '__origin__', None) or typ
+
+
+def _get_extra(typ: AnyType) -> AnyType:
+    return getattr(typ, '__extra__', _get_origin(typ))
 
 
 @lru_cache()
@@ -121,7 +116,7 @@ def _validate(typ: AnyType, value: Any, strict: bool) -> Any:
 
 
 def is_type(typ: Any) -> bool:
-    return isinstance(typ, AnyType.__args__)
+    return isinstance(typ, _types)
 
 
 def validate(typ: AnyType, value: Any, strict: bool = False) -> Any:
