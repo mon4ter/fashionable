@@ -169,6 +169,5 @@ class Attribute:
 
         setattr(instance, self._private_name, value)
 
-    # TODO test delete
     def __delete__(self, instance):
         self.__set__(instance, UNSET)

@@ -317,3 +317,12 @@ def test_implicit_none():
     assert dict(M(1)) == {'a': 1}
     assert dict(M(None)) == {'a': None}
     assert dict(M()) == {}
+
+
+def test_delete_attribute():
+    class M(Model):
+        a = Attribute(Optional[int], default=432)
+
+    m = M(999)
+    del m.a
+    assert m.a == 432
