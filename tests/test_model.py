@@ -10,9 +10,11 @@ def test_attributes():
         a = Attribute(str)
         b = Attribute(str)
 
+    # noinspection PyProtectedMember
     assert M._attributes == ('a', 'b')
 
 
+# noinspection PyProtectedMember
 def test_attributes_inheritance():
     class M1(Model):
         q = Attribute(str)
@@ -232,6 +234,7 @@ def test_mixin():
         a = Attribute(int)
         b = Attribute(int)
 
+    # noinspection PyProtectedMember
     assert M._attributes == ('a', 'b')
     assert bool(M(1, 2)) is False
 
@@ -326,3 +329,23 @@ def test_delete_attribute():
     m = M(999)
     del m.a
     assert m.a == 432
+
+
+def test_invalid_attribute():
+    class Raiser:
+        def __init__(self):
+            pass
+
+        def __str__(self):
+            raise Exception
+
+    class Inner(Model):
+        a = Attribute(str)
+
+    class M(Model):
+        b = Attribute(Inner)
+
+    with raises(ModelError) as exc:
+        M(Raiser())
+
+    assert 'invalid attribute' in exc.value.fmt

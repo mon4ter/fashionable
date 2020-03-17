@@ -123,7 +123,7 @@ class Attribute:
 
         try:
             value = validate(self.type, None if unset else value, self.strict)
-        except (TypeError, ValueError, ModelError) as exc:
+        except Exception as exc:
             if unset:
                 err = "Invalid %(model)s: missing required attribute %(attr)s"
                 err_type = ModelAttributeError
@@ -134,11 +134,10 @@ class Attribute:
                 err = "Invalid %(model)s: invalid type of attribute %(attr)s"
                 err_type = ModelTypeError
             else:
-                # TODO test invalid attribute
                 err = "Invalid %(model)s: invalid attribute %(attr)s"
                 err_type = ModelError
 
-            raise err_type(err, model=model, attr=self._name)
+            raise err_type(err, model=model, attr=self._name) from exc
 
         if unset:
             value = self.default
