@@ -64,7 +64,6 @@ class Model(metaclass=ModelMeta):
         return dict(self) == dict(other)
 
     def __str__(self):
-        # TODO test str
         return '{}({})'.format(self.__class__.__name__, self._id())
 
     def __repr__(self):
