@@ -55,10 +55,9 @@ class Model(metaclass=ModelMeta):
 
     def __eq__(self, other: Union['Model', Mapping, Iterable, Tuple]):
         if not isinstance(other, Model):
-            # TODO test compare with non-Model
             try:
-                other = validate(self, other, strict=False)
-            except ModelError:
+                other = validate(self.__class__, other, strict=False)
+            except (TypeError, ValueError, ModelError):
                 return NotImplemented
 
         return dict(self) == dict(other)

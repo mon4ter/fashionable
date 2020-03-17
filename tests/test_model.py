@@ -349,3 +349,12 @@ def test_invalid_attribute():
         M(Raiser())
 
     assert 'invalid attribute' in exc.value.fmt
+
+
+def test_compare_with_non_model():
+    class M(Model):
+        a = Attribute(int)
+
+    assert M(1) == 1
+    assert 1 == M(1)
+    assert M(1).__eq__('a') is NotImplemented
