@@ -349,11 +349,3 @@ def test_invalid_attribute():
         M(Raiser())
 
     assert 'invalid attribute' in exc.value.fmt
-
-
-def test_str():
-    class M(Model):
-        a = Attribute(int)
-        b = Attribute(int)
-
-    assert str(M(6, 7)) == 'M(6)'

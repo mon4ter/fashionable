@@ -67,12 +67,10 @@ class Model(metaclass=ModelMeta):
         return '{}({})'.format(self.__class__.__name__, self._id())
 
     def __repr__(self):
-        # TODO test repr
         return '{}({})'.format(
             self.__class__.__name__,
             ', '.join('{}={!r}'.format(k, getattr(self, k)) for k, _ in self),
         )
 
     def _id(self):
-        # TODO test _id override
         return next(iter(self))[1]
