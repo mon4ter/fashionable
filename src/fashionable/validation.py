@@ -9,14 +9,10 @@ __all__ = [
 ]
 
 if version_info >= (3, 7):
-    # noinspection PyUnresolvedReferences, PyProtectedMember
-    from typing import _GenericAlias, _SpecialForm
-    AnyType = Union[type, _SpecialForm, _GenericAlias]
+    AnyType = Union[type, type(Union), type(Iterable)]
 else:
-    # noinspection PyUnresolvedReferences, PyProtectedMember
-    from typing import _TypingBase, Type, TypingMeta
     # TODO Real AnyType
-    AnyType = Type  # Union[type, _TypingBase, TypingMeta]
+    AnyType = Any
 
 
 def _get_origin(typ: AnyType) -> AnyType:
