@@ -1,4 +1,9 @@
 # fashionable
+[![PyPI version](https://img.shields.io/pypi/v/fashionable.svg)](https://pypi.org/project/fashionable)
+[![Python version](https://img.shields.io/pypi/pyversions/fashionable.svg)](https://pypi.org/project/fashionable)
+[![Build Status](https://travis-ci.org/mon4ter/fashionable.svg?branch=master)](https://travis-ci.org/mon4ter/fashionable)
+[![codecov](https://codecov.io/gh/mon4ter/fashionable/branch/master/graph/badge.svg)](https://codecov.io/gh/mon4ter/fashionable)
+
 Decorate your project with some fashionable supermodels.
 
 ### Model example
