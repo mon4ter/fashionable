@@ -5,7 +5,6 @@ from typing import Any, Dict, Iterable, List, Mapping, Set, Tuple, Union
 
 __all__ = [
     'AnyType',
-    'is_type',
     'validate',
 ]
 
@@ -13,12 +12,11 @@ if version_info >= (3, 7):
     # noinspection PyUnresolvedReferences, PyProtectedMember
     from typing import _GenericAlias, _SpecialForm
     AnyType = Union[type, _SpecialForm, _GenericAlias]
-    _types = AnyType.__args__
 else:
     # noinspection PyUnresolvedReferences, PyProtectedMember
     from typing import _TypingBase, Type, TypingMeta
-    _types = (type, _TypingBase, TypingMeta)
-    AnyType = Type
+    # TODO Real AnyType
+    AnyType = Type  # Union[type, _TypingBase, TypingMeta]
 
 
 def _get_origin(typ: AnyType) -> AnyType:
@@ -31,9 +29,6 @@ def _get_extra(typ: AnyType) -> AnyType:
 
 @lru_cache()
 def _isinstance(value: AnyType, types: Tuple[AnyType, ...]) -> bool:
-    if not is_type(value):
-        return False
-
     origin = _get_origin(value)
     return any(_get_origin(t) == origin for t in types)
 
@@ -45,13 +40,11 @@ def _validate_union(typ: AnyType, value: Any, strict: bool) -> Any:
         except (TypeError, ValueError):
             pass
     else:
-        # TODO test invalid Union
         raise TypeError
 
 
 def _validate_mapping(typ: AnyType, mapping: Union[Mapping, Iterable], strict: bool) -> Mapping:
     if not isinstance(mapping, (Mapping, Iterable)):
-        # TODO test invalid Mapping
         raise TypeError
 
     mapping_type = _get_extra(typ)
@@ -65,7 +58,6 @@ def _validate_mapping(typ: AnyType, mapping: Union[Mapping, Iterable], strict: b
 
 def _validate_iterable(typ: AnyType, iterable: Iterable, strict: bool) -> Iterable:
     if not isinstance(iterable, Iterable):
-        # TODO test invalid Iterable
         raise TypeError
 
     iterable_type = _get_extra(typ)
@@ -113,10 +105,6 @@ def _validate(typ: AnyType, value: Any, strict: bool) -> Any:
                 raise
 
     return value
-
-
-def is_type(typ: Any) -> bool:
-    return isinstance(typ, _types)
 
 
 def validate(typ: AnyType, value: Any, strict: bool = False) -> Any:

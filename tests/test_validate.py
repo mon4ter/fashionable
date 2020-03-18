@@ -1,6 +1,6 @@
-from typing import Dict, List, NewType, Optional, Set, Tuple, Union, Any
+from typing import Any, Dict, List, NewType, Optional, Set, Tuple, Union
 
-from pytest import mark
+from pytest import mark, raises
 
 from fashionable import validate
 
@@ -44,3 +44,17 @@ Bool = NewType('Bool', bool)
 ])
 def test_validate(typ, value, result):
     assert validate(typ, value) == result
+
+
+@mark.parametrize('typ, value, exc', [
+    (int, 'a', ValueError),
+    (Union[float, int], 'a', TypeError),
+    (Dict[str, int], True, TypeError),
+    (Dict[str, int], 'a', ValueError),
+    (Dict[str, int], {'a': 'a'}, ValueError),
+    (List[int], True, TypeError),
+    (List[int], ['a'], ValueError),
+])
+def test_fail(typ, value, exc):
+    with raises(exc):
+        validate(typ, value)

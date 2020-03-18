@@ -1,7 +1,7 @@
 from typing import Any, Optional
 
 from .modelerror import ModelAttributeError, ModelError, ModelTypeError, ModelValueError
-from .validation import AnyType, is_type, validate
+from .validation import AnyType, validate
 
 __all__ = [
     'Attribute',
@@ -36,7 +36,9 @@ class Attribute:
 
     @type.setter
     def type(self, value: AnyType):
-        if not is_type(value):
+        try:
+            validate(AnyType, value, strict=True)
+        except (TypeError, ValueError):
             raise TypeError("Invalid type: must be a type, not {!r}".format(value))
 
         self._type = value
