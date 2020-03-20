@@ -14,6 +14,9 @@ def test_name():
     # noinspection PyProtectedMember
     assert a._private_name == '_m_' + name
 
+    with raises(TypeError):
+        Attribute(Any).name = 123
+
 
 def test_without_parameters():
     a = Attribute(Any)
@@ -65,3 +68,13 @@ def test_max():
 
     assert Attribute(str, max=0).max == 0
     assert Attribute(str, max='FFFFFF').max == 'FFFFFF'
+
+
+def test_strict():
+    assert Attribute(str).strict is False
+    assert Attribute(str, strict=True).strict is True
+    assert Attribute(str, strict=False).strict is False
+
+    with raises(TypeError):
+        # noinspection PyTypeChecker
+        Attribute(str, strict=5)
