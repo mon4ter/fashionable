@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pytest import mark
+from pytest import mark, raises
 
 from fashionable import Attribute, Supermodel
 
@@ -13,7 +13,7 @@ def test_supermodel():
     assert S(1).a == 1
 
 
-# noinspection PyAbstractClass
+# noinspection PyAbstractClass,PyProtectedMember
 def test_ttl():
     class S1(Supermodel):
         a = Attribute(int)
@@ -31,6 +31,11 @@ def test_ttl():
     assert S2._ttl == 5
     assert S3._ttl == 10
     assert S4._ttl == 5
+
+    with raises(TypeError):
+        # noinspection PyUnusedLocal
+        class S(Supermodel):
+            _ttl = '1'
 
 
 # noinspection PyAbstractClass

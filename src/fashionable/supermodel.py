@@ -2,6 +2,7 @@ from asyncio import get_event_loop
 from logging import getLogger
 from typing import Any, AsyncIterator, Optional
 
+from .attribute import UNSET
 from .model import Model, ModelMeta
 
 __all__ = [
@@ -27,14 +28,13 @@ class SupermodelMeta(ModelMeta):
             raise TypeError("Invalid _ttl: must be int or float, not {}".format(value.__class__.__name__))
 
     def __new__(mcs, name, bases, namespace):
-        notset = object()
-        ttl = namespace.pop('_ttl', notset)
-        klass = super().__new__(mcs, name, bases, namespace)
+        ttl = namespace.pop('_ttl', UNSET)
+        cls = super().__new__(mcs, name, bases, namespace)
 
-        if ttl is not notset:
-            klass._ttl = ttl
+        if ttl is not UNSET:
+            cls._ttl = ttl
 
-        return klass
+        return cls
 
 
 class SupermodelIterator:
