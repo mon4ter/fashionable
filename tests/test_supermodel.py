@@ -90,3 +90,25 @@ async def test_get():
     assert isinstance(s2, S1)
     assert s2.a == 'c'
     assert s2.b == 88
+
+
+@mark.asyncio
+async def test_abc():
+    # noinspection PyAbstractClass
+    class S(Supermodel):
+        a = Attribute(int)
+
+    with raises(NotImplementedError):
+        await S.get(1)
+
+    with raises(NotImplementedError):
+        await S.find(a=1)
+
+    with raises(NotImplementedError):
+        await S.create(1)
+
+    with raises(NotImplementedError):
+        await S(1).update(a=1)
+
+    with raises(NotImplementedError):
+        await S(1).delete()

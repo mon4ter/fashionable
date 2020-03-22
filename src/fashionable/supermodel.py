@@ -107,7 +107,7 @@ class Supermodel(Model, metaclass=SupermodelMeta):
         raise NotImplementedError
 
     @staticmethod
-    async def _scout(**kwargs) -> AsyncIterator[dict]:
+    async def _find(**kwargs) -> AsyncIterator[dict]:
         raise NotImplementedError
 
     @staticmethod
@@ -147,13 +147,14 @@ class Supermodel(Model, metaclass=SupermodelMeta):
         return model
 
     @classmethod
-    async def scout(cls, **kwargs) -> AsyncIterator[Model]:
-        return SupermodelIterator(cls, await cls._scout(**kwargs))
+    async def find(cls, **kwargs) -> AsyncIterator[Model]:
+        return SupermodelIterator(cls, await cls._find(**kwargs))
 
     async def update(self, **raw):
         id_ = self._id()
         backup = dict(self)
 
+        # noinspection PyUnresolvedReferences
         for attr in self._attributes:
             if attr in raw:
                 setattr(self, attr, raw[attr])
@@ -161,6 +162,7 @@ class Supermodel(Model, metaclass=SupermodelMeta):
         try:
             await self._update(id_, dict(self))
         except Exception:
+            # noinspection PyUnresolvedReferences
             for attr in self._attributes:
                 setattr(self, attr, backup.get(attr))
 
