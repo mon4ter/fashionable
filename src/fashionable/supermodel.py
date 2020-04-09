@@ -63,7 +63,7 @@ class Supermodel(Model, metaclass=SupermodelMeta):
     _refresh_tasks = {}
 
     @classmethod
-    def _cache(cls, id_: Any, model: Optional[Model] = None, reset: bool = True):
+    def _cache(cls, id_: Any, model: Optional['Supermodel'] = None, reset: bool = True):
         if id_ in cls._models:
             del cls._models[id_]
 
@@ -125,8 +125,9 @@ class Supermodel(Model, metaclass=SupermodelMeta):
         cls._cache(model._id(), model)
         return model
 
+    # TODO Test fresh
     @classmethod
-    async def get(cls, id_: Any, fresh: bool = False) -> Optional[Model]:
+    async def get(cls, id_: Any, fresh: bool = False) -> Optional['Supermodel']:
         if id_ in cls._models:
             logger.debug("%s(%s) hit", cls.__name__, id_)
             model = cls._models[id_]
@@ -147,7 +148,7 @@ class Supermodel(Model, metaclass=SupermodelMeta):
         return model
 
     @classmethod
-    async def find(cls, **kwargs) -> AsyncIterator[Model]:
+    async def find(cls, **kwargs) -> AsyncIterator['Supermodel']:
         return SupermodelIterator(cls, await cls._find(**kwargs))
 
     async def update(self, **raw):
@@ -175,6 +176,7 @@ class Supermodel(Model, metaclass=SupermodelMeta):
         await self._delete(id_)
         self._cache(id_, reset=False)
 
+    # TODO Test close
     @classmethod
     def close(cls):
         for handle in cls._expire_handles.values():
