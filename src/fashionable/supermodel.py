@@ -17,18 +17,22 @@ logger = getLogger(__name__)
 
 class SupermodelMeta(ModelMeta):
     @property
-    def _ttl(self):
-        return self._s_ttl
+    def _ttl(cls):
+        return getattr(cls, '.ttl', None)
 
     @_ttl.setter
-    def _ttl(self, value):
+    def _ttl(cls, value):
         if value is None or isinstance(value, (int, float)):
-            self._s_ttl = value
+            setattr(cls, '.ttl', value)
         else:
             raise TypeError("Invalid _ttl: must be int or float, not {}".format(value.__class__.__name__))
 
     def __new__(mcs, name, bases, namespace):
         ttl = namespace.pop('_ttl', UNSET)
+        namespace['.cache'] = {}
+        namespace['.trash'] = {}
+        namespace['.expire_handles'] = {}
+        namespace['.refresh_tasks'] = {}
         cls = super().__new__(mcs, name, bases, namespace)
 
         if ttl is not UNSET:
@@ -56,39 +60,41 @@ class SupermodelIterator:
 
 
 class Supermodel(Model, metaclass=SupermodelMeta):
-    _s_ttl = None
-    _models = {}
-    _old_models = {}
-    _expire_handles = {}
-    _refresh_tasks = {}
-
     @classmethod
     def _cache(cls, id_: Any, model: Optional['Supermodel'] = None, reset: bool = True):
-        if id_ in cls._models:
-            del cls._models[id_]
+        cache = getattr(cls, '.cache')
+        trash = getattr(cls, '.trash')
+        expire_handles = getattr(cls, '.expire_handles')
+        refresh_tasks = getattr(cls, '.refresh_tasks')
 
-        if id_ in cls._old_models:
-            del cls._old_models[id_]
+        if id_ in cache:
+            del cache[id_]
 
-        if id_ in cls._expire_handles:
-            cls._expire_handles[id_].cancel()
-            del cls._expire_handles[id_]
+        if id_ in trash:
+            del trash[id_]
 
-        if id_ in cls._refresh_tasks:
-            del cls._refresh_tasks[id_]
+        if id_ in expire_handles:
+            expire_handles[id_].cancel()
+            del expire_handles[id_]
+
+        if id_ in refresh_tasks:
+            del refresh_tasks[id_]
 
         if reset:
             if cls._ttl:
                 logger.debug("Creating expire %s(%s)", cls.__name__, id_)
-                cls._expire_handles[id_] = get_event_loop().call_later(cls._ttl, cls._expire, id_)
+                expire_handles[id_] = get_event_loop().call_later(cls._ttl, cls._expire, id_)
 
-            cls._models[id_] = model
+            cache[id_] = model
 
     @classmethod
     def _expire(cls, id_: Any):
-        if id_ in cls._models:
+        cache = getattr(cls, '.cache')
+        trash = getattr(cls, '.trash')
+
+        if id_ in cache:
             logger.debug("%s(%s) expired", cls.__name__, id_)
-            cls._old_models[id_] = cls._models.pop(id_)
+            trash[id_] = cache.pop(id_)
 
     @classmethod
     async def _refresh(cls, id_: Any):
@@ -128,22 +134,26 @@ class Supermodel(Model, metaclass=SupermodelMeta):
     # TODO Test fresh
     @classmethod
     async def get(cls, id_: Any, fresh: bool = False) -> Optional['Supermodel']:
-        if id_ in cls._models:
+        cache = getattr(cls, '.cache')
+        trash = getattr(cls, '.trash')
+        refresh_tasks = getattr(cls, '.refresh_tasks')
+
+        if id_ in cache:
             logger.debug("%s(%s) hit", cls.__name__, id_)
-            model = cls._models[id_]
+            model = cache[id_]
         else:
             logger.debug("%s(%s) miss", cls.__name__, id_)
 
-            if id_ not in cls._refresh_tasks:
+            if id_ not in refresh_tasks:
                 logger.debug("Creating refresh %s(%s)", cls.__name__, id_)
-                cls._refresh_tasks[id_] = get_event_loop().create_task(cls._refresh(id_))
+                refresh_tasks[id_] = get_event_loop().create_task(cls._refresh(id_))
 
-            if not fresh and id_ in cls._old_models:
-                logger.debug("Using old %s(%s)", cls.__name__, id_)
-                model = cls._old_models[id_]
+            if not fresh and id_ in trash:
+                logger.debug("Getting %s(%s) out of trash", cls.__name__, id_)
+                model = trash[id_]
             else:
                 logger.debug("Waiting for new %s(%s)", cls.__name__, id_)
-                model = await cls._refresh_tasks[id_]
+                model = await refresh_tasks[id_]
 
         return model
 
@@ -179,8 +189,8 @@ class Supermodel(Model, metaclass=SupermodelMeta):
     # TODO Test close
     @classmethod
     def close(cls):
-        for handle in cls._expire_handles.values():
+        for handle in getattr(cls, '.expire_handles').values():
             handle.cancel()
 
-        for task in cls._refresh_tasks.values():
+        for task in getattr(cls, '.refresh_tasks').values():
             task.cancel()
