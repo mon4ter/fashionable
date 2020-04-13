@@ -40,9 +40,9 @@ def test_ttl():
             _ttl = '1'
 
 
-# noinspection PyAbstractClass
 @mark.asyncio
 async def test_create():
+    # noinspection PyAbstractClass
     class S1(Supermodel):
         a = Attribute(str)
         b = Attribute(Optional[int])
@@ -62,9 +62,9 @@ async def test_create():
     assert s2.b == 2
 
 
-# noinspection PyAbstractClass
 @mark.asyncio
 async def test_get():
+    # noinspection PyAbstractClass
     class S1(Supermodel):
         a = Attribute(str)
         b = Attribute(Optional[int])
@@ -275,3 +275,5 @@ async def test_cancel():
     await S.get('s1')
     assert getattr(S, '.refresh_tasks')
     S.close()
+    assert not getattr(S, '.expire_handles')
+    assert not getattr(S, '.refresh_tasks')

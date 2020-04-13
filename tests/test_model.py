@@ -10,11 +10,9 @@ def test_attributes():
         a = Attribute(str)
         b = Attribute(str)
 
-    # noinspection PyProtectedMember
-    assert M._attributes == ('a', 'b')
+    assert getattr(M, '.attributes') == ('a', 'b')
 
 
-# noinspection PyProtectedMember
 def test_attributes_inheritance():
     class M1(Model):
         q = Attribute(str)
@@ -32,10 +30,10 @@ def test_attributes_inheritance():
     class M5(M3):
         w = Attribute(str)
 
-    assert M2._attributes == ('q', 'w', 'e')
-    assert M3._attributes == ('q', 'w', 'e', 'r')
-    assert M4._attributes == ('q', 'w', 'e')
-    assert M5._attributes == ('q', 'w', 'e', 'r')
+    assert getattr(M2, '.attributes') == ('q', 'w', 'e')
+    assert getattr(M3, '.attributes') == ('q', 'w', 'e', 'r')
+    assert getattr(M4, '.attributes') == ('q', 'w', 'e')
+    assert getattr(M5, '.attributes') == ('q', 'w', 'e', 'r')
 
 
 def test_getter_setter():
@@ -73,7 +71,7 @@ def test_type():
         foo = Attribute(bool)
 
     assert M2(True).foo is True
-    # assert M2(0).foo == 0
+    assert M2(0).foo == 0
     assert M2('').foo is False
     assert M2('0').foo is True
 
@@ -234,8 +232,7 @@ def test_mixin():
         a = Attribute(int)
         b = Attribute(int)
 
-    # noinspection PyProtectedMember
-    assert M._attributes == ('a', 'b')
+    assert getattr(M, '.attributes') == ('a', 'b')
     assert bool(M(1, 2)) is False
 
 

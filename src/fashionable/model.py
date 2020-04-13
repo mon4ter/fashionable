@@ -20,7 +20,7 @@ class ModelMeta(type):
         super().__init__(name, bases, namespace)
 
         slots = []
-        attributes = [a for k in bases for a in getattr(k, '_attributes', ())]
+        attributes = [a for k in bases for a in getattr(k, '.attributes', ())]
 
         for attr_name, attr in namespace.items():
             if not isinstance(attr, Attribute):
@@ -33,21 +33,23 @@ class ModelMeta(type):
                 attributes.append(attr.name)
 
         cls.__slots__ = tuple(slots)
-        cls._attributes = tuple(attributes)
+        setattr(cls, '.attributes', tuple(attributes))
 
 
 class Model(metaclass=ModelMeta):
     def __init__(self, *args, **kwargs):
-        for attr, value in zip(self._attributes, args):
+        attributes = getattr(self, '.attributes')
+
+        for attr, value in zip(attributes, args):
             kwargs.setdefault(attr, value)
 
         lower_kwargs = {k.lower(): v for k, v in kwargs.items()}
 
-        for attr in self._attributes:
+        for attr in attributes:
             setattr(self, attr, kwargs.get(attr, lower_kwargs.get(attr.lower(), UNSET)))
 
     def __iter__(self):
-        for attr in self._attributes:
+        for attr in getattr(self, '.attributes'):
             value = getattr(self, attr)
 
             if value is not UNSET:

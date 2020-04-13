@@ -160,19 +160,18 @@ class Supermodel(Model, metaclass=SupermodelMeta):
         return SupermodelIterator(cls, await cls._find(**kwargs))
 
     async def update(self, **raw):
+        attributes = getattr(self, '.attributes')
         id_ = self._id()
         backup = dict(self)
 
-        # noinspection PyUnresolvedReferences
-        for attr in self._attributes:
+        for attr in attributes:
             if attr in raw:
                 setattr(self, attr, raw[attr])
 
         try:
             await self._update(id_, dict(self))
         except Exception:
-            # noinspection PyUnresolvedReferences
-            for attr in self._attributes:
+            for attr in attributes:
                 setattr(self, attr, backup.get(attr))
 
             raise
@@ -186,8 +185,7 @@ class Supermodel(Model, metaclass=SupermodelMeta):
 
     @classmethod
     def close(cls):
-        for handle in getattr(cls, '.expire_handles').values():
-            handle.cancel()
-
-        for task in getattr(cls, '.refresh_tasks').values():
-            task.cancel()
+        for tasks in (getattr(cls, '.expire_handles'), getattr(cls, '.refresh_tasks')):
+            while tasks:
+                id_ = next(iter(tasks))
+                tasks.pop(id_).cancel()

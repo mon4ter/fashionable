@@ -110,7 +110,7 @@ class Attribute:
             raise TypeError("Invalid name: must be a str, not {}".format(value.__class__.__name__))
 
         self._name = value
-        self._private_name = '_m_' + value
+        self._private_name = '.' + value
 
     @property
     def private_name(self) -> str:

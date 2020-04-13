@@ -11,8 +11,7 @@ def test_name():
     a = Attribute(Any)
     a.name = name
     assert a.name == name
-    # noinspection PyProtectedMember
-    assert a._private_name == '_m_' + name
+    assert a.private_name == '.' + name
 
     with raises(TypeError):
         Attribute(Any).name = 123
