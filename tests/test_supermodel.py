@@ -1,4 +1,5 @@
 from asyncio import sleep
+from time import time
 from typing import AsyncIterator, Optional
 
 from pytest import mark, raises
@@ -119,7 +120,7 @@ async def test_abc():
 async def test_expire():
     # noinspection PyAbstractClass
     class S(Supermodel):
-        _ttl = 0.1
+        _ttl = 0.01
 
         a = Attribute(str)
 
@@ -132,9 +133,9 @@ async def test_expire():
             pass
 
     s1 = await S.create('s1')
-    await sleep(0.1)
+    await sleep(0.01)
     assert (await S.get('s1') == s1)
-    await sleep(0.1)
+    await sleep(0.01)
     assert (await S.get('s1') is None)
 
 
@@ -232,3 +233,22 @@ async def test_find():
         count += 1
 
     assert count == 2
+
+
+@mark.asyncio
+async def test_fresh():
+    # noinspection PyAbstractClass
+    class S(Supermodel):
+        _ttl = .01
+
+        a = Attribute(str)
+        b = Attribute(float)
+
+        @staticmethod
+        async def _get(id_: str) -> Optional[dict]:
+            return {'a': id_, 'b': time()}
+
+    s1 = await S.get('s1')
+    await sleep(0.01)
+    assert (await S.get('s1') == s1)
+    assert (await S.get('s1', fresh=True) != s1)

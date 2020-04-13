@@ -131,7 +131,6 @@ class Supermodel(Model, metaclass=SupermodelMeta):
         cls._cache(model._id(), model)
         return model
 
-    # TODO Test fresh
     @classmethod
     async def get(cls, id_: Any, fresh: bool = False) -> Optional['Supermodel']:
         cache = getattr(cls, '.cache')
