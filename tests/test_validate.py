@@ -8,6 +8,16 @@ Bool = NewType('Bool', bool)  # Because Union[float, int, bool] shrinks to Union
 T = TypeVar('T')
 
 
+class Pair:
+    def __init__(self, a: int, b: int):
+        self.a = a
+        self.b = b
+
+    def __iter__(self):
+        yield 'a', self.a
+        yield 'b', self.b
+
+
 @mark.parametrize('typ, value, result', [
     (int,                             4,                                      4),
     (int,                             '4',                                    4),
@@ -46,6 +56,7 @@ T = TypeVar('T')
     (Typing,                          Optional[str],                          Optional[str]),
     (Typing,                          Mapping[str, int],                      Mapping[str, int]),
     (Typing,                          Any,                                    Any),
+    (dict,                            Pair(1, 2),                             {'a': 1, 'b': 2}),
 ])
 def test_validate(typ, value, result):
     assert validate(typ, value) == result

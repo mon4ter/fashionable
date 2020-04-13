@@ -26,6 +26,10 @@ def _get_extra(typ: Typing) -> Typing:
 @lru_cache()
 def _isinstance(value: Typing, types: Tuple[Typing, ...]) -> bool:
     origin = _get_origin(value)
+
+    if origin is value:
+        return value is Any
+
     return any(_get_origin(t) == origin for t in types)
 
 
@@ -76,7 +80,7 @@ def _validate(typ: Typing, value: Any, strict: bool) -> Any:
     if hasattr(typ, '__supertype__'):
         typ = typ.__supertype__
 
-    if typ is Any or typ is not type and _isinstance(typ, (Type,)) and _isinstance(value, (typ.__args__[0],)):
+    if typ is Any or _isinstance(typ, (Type,)) and _isinstance(value, (typ.__args__[0],)):
         pass
     elif _isinstance(typ, (Union,)):
         value = _validate_union(typ, value, strict)
