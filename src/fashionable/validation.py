@@ -1,35 +1,35 @@
 from functools import lru_cache
 from itertools import chain, product, repeat
 from sys import version_info
-from typing import Any, Dict, Iterable, List, Mapping, Set, Tuple, Union
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Set, Tuple, Type, TypeVar, Union
 
 __all__ = [
-    'AnyType',
+    'Typing',
     'validate',
 ]
 
 if version_info >= (3, 7):
-    AnyType = Union[type, type(Union), type(Iterable)]
+    Typing = Union[type, type(Union), type(Iterable)]
 else:
-    # TODO Real AnyType
-    AnyType = Any
+    T = TypeVar('T')
+    Typing = Union[type, Type[Any], Type[Optional[T]], Type[Mapping], Type[Tuple]]
 
 
-def _get_origin(typ: AnyType) -> AnyType:
+def _get_origin(typ: Typing) -> Typing:
     return getattr(typ, '__origin__', None) or typ
 
 
-def _get_extra(typ: AnyType) -> AnyType:
+def _get_extra(typ: Typing) -> Typing:
     return getattr(typ, '__extra__', _get_origin(typ))
 
 
 @lru_cache()
-def _isinstance(value: AnyType, types: Tuple[AnyType, ...]) -> bool:
+def _isinstance(value: Typing, types: Tuple[Typing, ...]) -> bool:
     origin = _get_origin(value)
     return any(_get_origin(t) == origin for t in types)
 
 
-def _validate_union(typ: AnyType, value: Any, strict: bool) -> Any:
+def _validate_union(typ: Typing, value: Any, strict: bool) -> Any:
     for strict, element_type in product(range(1, strict - 1, -1), typ.__args__):
         try:
             return _validate(element_type, value, strict)
@@ -39,7 +39,7 @@ def _validate_union(typ: AnyType, value: Any, strict: bool) -> Any:
         raise TypeError
 
 
-def _validate_mapping(typ: AnyType, mapping: Union[Mapping, Iterable], strict: bool) -> Mapping:
+def _validate_mapping(typ: Typing, mapping: Union[Mapping, Iterable], strict: bool) -> Mapping:
     if not isinstance(mapping, (Mapping, Iterable)):
         raise TypeError
 
@@ -52,7 +52,7 @@ def _validate_mapping(typ: AnyType, mapping: Union[Mapping, Iterable], strict: b
     )
 
 
-def _validate_iterable(typ: AnyType, iterable: Iterable, strict: bool) -> Iterable:
+def _validate_iterable(typ: Typing, iterable: Iterable, strict: bool) -> Iterable:
     if not isinstance(iterable, Iterable):
         raise TypeError
 
@@ -62,7 +62,7 @@ def _validate_iterable(typ: AnyType, iterable: Iterable, strict: bool) -> Iterab
     return iterable_type(_validate(element_type, e, strict) for e in iterable)
 
 
-def _validate_tuple(typ: AnyType, tpl: Union[Tuple, Iterable], strict: bool):
+def _validate_tuple(typ: Typing, tpl: Union[Tuple, Iterable], strict: bool) -> Tuple:
     if not isinstance(tpl, (Tuple, Iterable)):
         raise TypeError
 
@@ -72,11 +72,11 @@ def _validate_tuple(typ: AnyType, tpl: Union[Tuple, Iterable], strict: bool):
     return tuple_type(_validate(et, e, strict) for et, e in zip(typ.__args__, filled_tuple))
 
 
-def _validate(typ: AnyType, value: Any, strict: bool) -> Any:
+def _validate(typ: Typing, value: Any, strict: bool) -> Any:
     if hasattr(typ, '__supertype__'):
         typ = typ.__supertype__
 
-    if typ is Any:
+    if typ is Any or typ is not type and _isinstance(typ, (Type,)) and _isinstance(value, (typ.__args__[0],)):
         pass
     elif _isinstance(typ, (Union,)):
         value = _validate_union(typ, value, strict)
@@ -103,7 +103,7 @@ def _validate(typ: AnyType, value: Any, strict: bool) -> Any:
     return value
 
 
-def validate(typ: AnyType, value: Any, strict: bool = False) -> Any:
+def validate(typ: Typing, value: Any, strict: bool = False) -> Any:
     try:
         return _validate(typ, value, strict)
     except TypeError as err:

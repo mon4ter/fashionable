@@ -1,7 +1,6 @@
-from sys import version_info
 from typing import Any
 
-from pytest import raises, mark
+from pytest import mark, raises
 
 from fashionable import Attribute, UNSET
 
@@ -27,11 +26,9 @@ def test_without_parameters():
 
 
 def test_type():
-    # TODO Fix test for py35
-    if version_info >= (3, 7):
-        with raises(TypeError):
-            # noinspection PyTypeChecker
-            Attribute('123')
+    with raises(TypeError):
+        # noinspection PyTypeChecker
+        Attribute('123')
 
     assert Attribute(str).type == str
 

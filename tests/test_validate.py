@@ -1,11 +1,11 @@
-from typing import Any, Dict, List, NewType, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Mapping, NewType, Optional, Set, Tuple, Type, TypeVar, Union
 
 from pytest import mark, raises
 
-from fashionable import validate
+from fashionable import validate, Typing
 
-# Because Union[float, int, bool] shrinks to Union[float, int]
-Bool = NewType('Bool', bool)
+Bool = NewType('Bool', bool)  # Because Union[float, int, bool] shrinks to Union[float, int]
+T = TypeVar('T')
 
 
 @mark.parametrize('typ, value, result', [
@@ -41,6 +41,11 @@ Bool = NewType('Bool', bool)
     (Tuple[int, str, Optional[Bool]], ['2', '2'],                             (2, '2', None)),
     (List[Tuple[int, int]],           [['1', '2'], ['3', '4']],               [(1, 2), (3, 4)]),
     (Any,                             [['1', '2'], ['3', '4']],               [['1', '2'], ['3', '4']]),
+    (Type[Optional[T]],               Optional[str],                          Optional[str]),
+    (Typing,                          int,                                    int),
+    (Typing,                          Optional[str],                          Optional[str]),
+    (Typing,                          Mapping[str, int],                      Mapping[str, int]),
+    (Typing,                          Any,                                    Any),
 ])
 def test_validate(typ, value, result):
     assert validate(typ, value) == result
