@@ -239,7 +239,7 @@ async def test_find():
 async def test_fresh():
     # noinspection PyAbstractClass
     class S(Supermodel):
-        _ttl = .01
+        _ttl = 0.01
 
         a = Attribute(str)
         b = Attribute(float)
@@ -252,3 +252,26 @@ async def test_fresh():
     await sleep(0.01)
     assert (await S.get('s1') == s1)
     assert (await S.get('s1', fresh=True) != s1)
+
+
+@mark.asyncio
+async def test_cancel():
+    # noinspection PyAbstractClass
+    class S(Supermodel):
+        _ttl = 0.02
+
+        a = Attribute(str)
+
+        @staticmethod
+        async def _get(id_: str) -> Optional[dict]:
+            await sleep(0.01)
+            return
+
+    await S.get('s1')
+    await sleep(0.01)
+    assert getattr(S, '.expire_handles')
+
+    await sleep(0.01)
+    await S.get('s1')
+    assert getattr(S, '.refresh_tasks')
+    S.close()

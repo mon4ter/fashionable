@@ -74,11 +74,10 @@ class Supermodel(Model, metaclass=SupermodelMeta):
             del trash[id_]
 
         if id_ in expire_handles:
-            expire_handles[id_].cancel()
-            del expire_handles[id_]
+            expire_handles.pop(id_).cancel()
 
         if id_ in refresh_tasks:
-            del refresh_tasks[id_]
+            refresh_tasks.pop(id_).cancel()
 
         if reset:
             if cls._ttl:
@@ -100,7 +99,7 @@ class Supermodel(Model, metaclass=SupermodelMeta):
     async def _refresh(cls, id_: Any):
         raw = await cls._get(id_)
         model = cls(**raw) if raw else None
-        cls._cache(id_, model)
+        get_event_loop().call_soon(cls._cache, id_, model)
         logger.debug("%s(%s) refreshed", cls.__name__, id_)
         return model
 
@@ -185,7 +184,6 @@ class Supermodel(Model, metaclass=SupermodelMeta):
         await self._delete(id_)
         self._cache(id_, reset=False)
 
-    # TODO Test close
     @classmethod
     def close(cls):
         for handle in getattr(cls, '.expire_handles').values():
