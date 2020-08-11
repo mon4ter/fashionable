@@ -96,7 +96,7 @@ def _validate(typ: Typing, value: Any, strict: bool) -> Any:
 
         try:
             value = typ(value)
-        except (TypeError, ValueError):
+        except (TypeError, ValueError, AttributeError):
             if isinstance(value, Mapping):
                 value = typ(**value)
             elif isinstance(value, (Iterable, tuple)):

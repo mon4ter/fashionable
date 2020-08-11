@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Mapping, NewType, Optional, Set, Tuple, Type
 
 from pytest import mark, raises
 
-from fashionable import validate, Typing
+from fashionable import Attribute, Model, validate, Typing
 
 Bool = NewType('Bool', bool)  # Because Union[float, int, bool] shrinks to Union[float, int]
 T = TypeVar('T')
@@ -16,6 +16,17 @@ class Pair:
     def __iter__(self):
         yield 'a', self.a
         yield 'b', self.b
+
+
+class C(Model):
+    x = Attribute(float)
+    y = Attribute(float)
+
+
+class Params(Model):
+    a = Attribute(str)
+    b = Attribute(Optional[int])
+    c = Attribute(C)
 
 
 @mark.parametrize('typ, value, result', [
@@ -57,19 +68,21 @@ class Pair:
     (Typing,                          Mapping[str, int],                      Mapping[str, int]),
     (Typing,                          Any,                                    Any),
     (dict,                            Pair(1, 2),                             {'a': 1, 'b': 2}),
+    (Params,                          [1, 2, [3, 4]],                         Params('1', 2, C(3.0, 4.0))),
+    (Params,                          {'a': 1, 'c': {'x': 2, 'y': 3}},        Params('1', c=C(2.0, 3.0))),
 ])
 def test_validate(typ, value, result):
     assert validate(typ, value) == result
 
 
 @mark.parametrize('typ, value, exc', [
-    (int, 'a', ValueError),
-    (Union[float, int], 'a', TypeError),
-    (Dict[str, int], True, TypeError),
-    (Dict[str, int], 'a', ValueError),
-    (Dict[str, int], {'a': 'a'}, ValueError),
-    (List[int], True, TypeError),
-    (List[int], ['a'], ValueError),
+    (int,               'a',        ValueError),
+    (Union[float, int], 'a',        TypeError),
+    (Dict[str, int],    True,       TypeError),
+    (Dict[str, int],    'a',        ValueError),
+    (Dict[str, int],    {'a': 'a'}, ValueError),
+    (List[int],         True,       TypeError),
+    (List[int],         ['a'],      ValueError),
 ])
 def test_fail(typ, value, exc):
     with raises(exc):
