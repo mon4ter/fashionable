@@ -65,7 +65,8 @@ class Model(metaclass=ModelMeta):
         return dict(self) == dict(other)
 
     def __str__(self):
-        return '{}({})'.format(self.__class__.__name__, self._id())
+        id_ = self._id()
+        return '{}({})'.format(self.__class__.__name__, '' if id_ is UNSET else id_)
 
     def __repr__(self):
         return '{}({})'.format(

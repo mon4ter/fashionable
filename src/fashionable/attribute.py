@@ -126,7 +126,7 @@ class Attribute:
         try:
             value = validate(self.type, None if unset else value, self.strict)
         except Exception as exc:
-            if unset:
+            if unset or isinstance(exc, AttributeError):
                 err = "Invalid %(model)s: missing required attribute %(attr)s"
                 err_type = ModelAttributeError
             elif isinstance(exc, ValueError):

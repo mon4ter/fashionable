@@ -213,6 +213,15 @@ def test_id():
 
     assert str(M2('test', 123)) == "M2('123')"
 
+    class M3(Model):
+        a = Attribute(int)
+        b = Attribute(Optional[str])
+
+        def _id(self):
+            return self.b
+
+    assert str(M3(1)) == 'M3()'
+
 
 def test_repr():
     class M(Model):
@@ -275,6 +284,9 @@ def test_nested():
     assert m23.x.b == 2
     assert m23.y.a == 3
     assert m23.y.b == 4
+
+    with raises(AttributeError):
+        M2(1, 2)
 
 
 def test_list_of_models():
