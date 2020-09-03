@@ -2,7 +2,8 @@ from typing import Any, Dict, List, Mapping, NewType, Optional, Set, Tuple, Type
 
 from pytest import mark, raises
 
-from fashionable import Attribute, Model, validate, Typing
+from fashionable import Attribute, Model, validate
+from fashionable.typedef import Typing
 
 Bool = NewType('Bool', bool)  # Because Union[float, int, bool] shrinks to Union[float, int]
 T = TypeVar('T')

@@ -21,7 +21,6 @@ def test_without_parameters():
     assert a.type is Any
     assert a.strict is False
     assert a.default is UNSET
-    assert a.limit is None
     assert a.min is UNSET
     assert a.max is UNSET
 
@@ -52,19 +51,10 @@ def test_default():
         Attribute(int, default=1000, max=999)
 
     with raises(ValueError):
-        Attribute(str, default='abc', limit=2)
-
-
-def test_limit():
-    with raises(TypeError):
-        # noinspection PyTypeChecker
-        Attribute(str, limit=0.5)
+        Attribute(str, default='a', min=2)
 
     with raises(ValueError):
-        Attribute(str, limit=-5)
-
-    assert Attribute(str, limit=0).limit == 0
-    assert Attribute(str, limit=100).limit == 100
+        Attribute(str, default='abc', max=2)
 
 
 def test_min():

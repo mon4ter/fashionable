@@ -3,8 +3,9 @@ from copy import copy
 from logging import getLogger
 from typing import Any, AsyncIterator, Dict, Optional, Tuple, Type, Union
 
-from .attribute import UNSET
-from .model import Model, ModelMeta
+from .model import Model
+from .modelmeta import ModelMeta
+from .unset import UNSET
 
 __all__ = [
     'logger',

@@ -106,81 +106,88 @@ def test_default():
 
 
 def test_limit():
-    limit = 10
+    min_ = 10
+    max_ = 20
 
     class M(Model):
-        foo = Attribute(str, limit=limit)
+        foo = Attribute(str, min=min_, max=max_)
 
     try:
-        v = 'a' * (limit - 1)
+        v = 'a' * max_
         assert M(v).foo == v
     except ModelError as exc:
         fail("Unexpected InvalidModelError {}".format(exc))
 
     try:
-        v = 'a' * limit
+        v = 'a' * min_
         assert M(v).foo == v
     except ModelError as exc:
         fail("Unexpected InvalidModelError {}".format(exc))
 
     with raises(ModelError) as exc:
-        v = 'a' * (limit + 1)
+        v = 'a' * (min_ - 1)
         M(v)
 
-    assert 'too long' in str(exc.value)
+    assert str(min_) in str(exc.value)
+
+    with raises(ModelError) as exc:
+        v = 'a' * (max_ + 1)
+        M(v)
+
+    assert str(max_) in str(exc.value)
+    assert 'length' in str(exc.value)
     assert 'foo' in str(exc.value)
     assert 'M' in str(exc.value)
-    assert str(limit) in str(exc.value)
 
 
 def test_min():
-    min_ = 'AAAAAB'
+    min_ = 10
 
     class M(Model):
         foo = Attribute(str, min=min_)
 
     with raises(ModelError) as exc:
-        M('AAAAAA')
+        M('a' * (min_ - 1))
 
     assert '>=' in str(exc.value)
     assert 'foo' in str(exc.value)
     assert 'M' in str(exc.value)
-    assert min_ in str(exc.value)
+    assert str(min_) in str(exc.value)
 
     try:
-        assert M(min_).foo == min_
+        assert M('a' * min_).foo
     except ModelError as exc:
         fail("Unexpected InvalidModelError {}".format(exc))
 
     try:
-        assert M('FFFFFF').foo == 'FFFFFF'
+        assert M('a' * (min_ + 1)).foo
     except ModelError as exc:
         fail("Unexpected InvalidModelError {}".format(exc))
 
 
 def test_max():
-    max_ = 'FFFFFE'
+    max_ = 100
 
     class M(Model):
         foo = Attribute(str, max=max_)
 
     try:
-        assert M('AAAAAA').foo == 'AAAAAA'
+        assert M('a' * (max_ - 1)).foo
     except ModelError as exc:
         fail("Unexpected InvalidModelError {}".format(exc))
 
     try:
-        assert M(max_).foo == max_
+        assert M('a' * max_).foo
     except ModelError as exc:
         fail("Unexpected InvalidModelError {}".format(exc))
 
     with raises(ModelError) as exc:
-        M('FFFFFF')
+        M('a' * (max_ + 1))
 
     assert '<=' in str(exc.value)
     assert 'foo' in str(exc.value)
     assert 'M' in str(exc.value)
-    assert max_ in str(exc.value)
+    assert str(max_) in str(exc.value)
 
 
 def test_iter():

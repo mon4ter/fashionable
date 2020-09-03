@@ -1,18 +1,12 @@
 from functools import lru_cache
 from itertools import chain, product, repeat
-from sys import version_info
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Set, Tuple, Type, TypeVar, Union
+from typing import Any, Dict, Iterable, List, Mapping, Set, Tuple, Type, Union
+
+from .typedef import Typing
 
 __all__ = [
-    'Typing',
     'validate',
 ]
-
-if version_info >= (3, 7):
-    Typing = Union[type, type(Union), type(Iterable)]
-else:
-    T = TypeVar('T')
-    Typing = Union[type, Type[Any], Type[Optional[T]], Type[Mapping], Type[Tuple]]
 
 
 def _get_origin(typ: Typing) -> Typing:
