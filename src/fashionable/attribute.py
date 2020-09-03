@@ -2,7 +2,7 @@ from typing import Type
 
 from .baseattribute import BaseAttribute
 from .model import Model
-from .modelerror import ModelAttributeError, ModelError, ModelTypeError, ModelValueError
+from .errors import ModelAttributeError, ModelTypeError, ModelValueError, ValidateError
 from .typedef import Value
 from .unset import UNSET
 from .validation import validate
@@ -21,21 +21,18 @@ class Attribute(BaseAttribute):
 
         try:
             value = validate(self.type, None if unset else value, self.strict)
-        except Exception as exc:
+        except ValidateError as exc:
             if unset or isinstance(exc, AttributeError):
-                err = "missing required attribute %(attr)s"
                 err_type = ModelAttributeError
             elif isinstance(exc, ValueError):
-                err = "invalid value of attribute %(attr)s"
                 err_type = ModelTypeError
             elif isinstance(exc, TypeError):
-                err = "=invalid type of attribute %(attr)s"
                 err_type = ModelTypeError
             else:
-                err = "invalid attribute %(attr)s"
-                err_type = ModelError
+                # TODO test exc bypass
+                raise
 
-            raise err_type("Invalid %(model)s: " + err, model=type(model).__name__, attr=self._name) from exc
+            raise err_type(model=type(model).__name__, attr=self._name) from exc
 
         if unset:
             value = self.default
@@ -44,7 +41,7 @@ class Attribute(BaseAttribute):
 
         if self._min is not UNSET and (len(value) if iterable else value) < self._min:
             raise ModelValueError(
-                "Invalid %(model)s: attribute %(attr)s: {}should be >= %(min)s".format('length ' * iterable),
+                "{}should be >= %(min)s".format('length ' * iterable),
                 model=type(model).__name__,
                 attr=self._name,
                 min=self._min,
@@ -52,7 +49,7 @@ class Attribute(BaseAttribute):
 
         if self._max is not UNSET and (len(value) if iterable else value) > self._max:
             raise ModelValueError(
-                "Invalid %(model)s: attribute %(attr)s: {}should be <= %(max)s".format('length ' * iterable),
+                "{}should be <= %(max)s".format('length ' * iterable),
                 model=type(model).__name__,
                 attr=self._name,
                 max=self._max,

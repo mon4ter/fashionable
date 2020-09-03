@@ -2,6 +2,7 @@ from functools import lru_cache
 from itertools import chain, product, repeat
 from typing import Any, Dict, Iterable, List, Mapping, Set, Tuple, Type, Union
 
+from .errors import ValidateError
 from .typedef import Typing
 
 __all__ = [
@@ -90,7 +91,7 @@ def _validate(typ: Typing, value: Any, strict: bool) -> Any:
 
         try:
             value = typ(value)
-        except (TypeError, ValueError, AttributeError):
+        except ValidateError:
             if isinstance(value, Mapping):
                 value = typ(**value)
             elif isinstance(value, (Iterable, tuple)):

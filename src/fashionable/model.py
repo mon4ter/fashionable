@@ -1,7 +1,7 @@
 from copy import deepcopy
 from typing import Any, Dict, Iterable, Mapping, Tuple, Union
 
-from .modelerror import ModelError
+from .errors import ValidateError
 from .modelmeta import ModelMeta
 from .unset import UNSET
 from .validation import validate
@@ -17,6 +17,7 @@ class Model(metaclass=ModelMeta):
         if hasattr(obj, 'to_dict'):
             obj = obj.to_dict()
         elif hasattr(obj, 'toDict'):
+            # TODO test toDict
             obj = obj.toDict()
         elif hasattr(obj, '__iter__') and not isinstance(obj, (str, bytes, bytearray)):
             obj = type(obj)(cls._to_dict(o) for o in (obj.items() if isinstance(obj, dict) else obj))
@@ -45,7 +46,7 @@ class Model(metaclass=ModelMeta):
         if not isinstance(other, type(self)):
             try:
                 other = validate(type(self), other, strict=False)
-            except (TypeError, ValueError, ModelError):
+            except ValidateError:
                 return NotImplemented
 
         return all(getattr(other, attr) == getattr(self, attr) for attr in getattr(self, '.attributes'))

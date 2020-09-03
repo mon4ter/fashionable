@@ -1,3 +1,4 @@
+from .errors import ValidateError
 from .typedef import Limiter as L, Typing, Value as V
 from .unset import UNSET
 from .validation import validate
@@ -66,7 +67,7 @@ class BaseAttribute:
 
                 if self._max is not UNSET and (len(value) if iterable else value) > self._max:
                     raise ValueError("{}should be <= {}".format('length ' * iterable, self._max))
-            except (TypeError, ValueError, AttributeError) as exc:
+            except ValidateError as exc:
                 raise type(exc)("Invalid {}.default: {}".format(type(self).__name__, exc)) from exc
 
         self._default = value

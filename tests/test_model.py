@@ -3,7 +3,7 @@ from typing import Dict, List, Optional
 
 from pytest import fail, raises
 
-from fashionable import Attribute, Model, ModelError
+from fashionable import Attribute, Model, FashionableError, ModelError
 
 
 def test_attributes():
@@ -44,13 +44,13 @@ def test_getter_setter():
     assert M('a').a == 'a'
 
 
-def test_invalid_model_error():
+def test_fashionable_error():
     fmt = "Error %(a)s %(b)s"
 
-    with raises(ModelError) as exc:
-        raise ModelError(fmt, a='a', b='b')
+    with raises(FashionableError) as exc:
+        raise FashionableError(fmt, a='a', b='b')
 
-    assert "Error a b" in str(exc.value)
+    assert str(exc.value) == "Error a b"
     assert exc.value.fmt == fmt
     assert exc.value.kwargs == {'a': 'a', 'b': 'b'}
 
@@ -360,27 +360,7 @@ def test_delete_attribute():
     with raises(AttributeError) as exc:
         del m2.some_name
 
-    assert 'some_name' in str(exc)
-
-
-def test_invalid_attribute():
-    class Raiser:
-        def __init__(self):
-            pass
-
-        def __str__(self):
-            raise Exception
-
-    class Inner(Model):
-        a = Attribute(str)
-
-    class M(Model):
-        b = Attribute(Inner)
-
-    with raises(ModelError) as exc:
-        M(Raiser())
-
-    assert 'invalid attribute' in exc.value.fmt
+    assert 'some_name' in str(exc.value)
 
 
 def test_compare_with_non_model():
