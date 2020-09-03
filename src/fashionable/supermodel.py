@@ -1,6 +1,7 @@
 from asyncio import get_event_loop
+from copy import copy
 from logging import getLogger
-from typing import Any, AsyncIterator, Optional
+from typing import Any, AsyncIterator, Dict, Optional, Tuple, Type, Union
 
 from .attribute import UNSET
 from .model import Model, ModelMeta
@@ -17,17 +18,17 @@ logger = getLogger(__name__)
 
 class SupermodelMeta(ModelMeta):
     @property
-    def _ttl(cls):
+    def _ttl(cls) -> Optional[Union[int, float]]:
         return getattr(cls, '.ttl', None)
 
     @_ttl.setter
-    def _ttl(cls, value):
+    def _ttl(cls, value: Optional[Union[int, float]]):
         if value is None or isinstance(value, (int, float)):
             setattr(cls, '.ttl', value)
         else:
-            raise TypeError("Invalid _ttl: must be int or float, not {}".format(value.__class__.__name__))
+            raise TypeError("Invalid _ttl: must be int or float, not {}".format(type(value).__name__))
 
-    def __new__(mcs, name, bases, namespace):
+    def __new__(mcs, name: str, bases: Tuple[type, ...], namespace: Dict[str, Any]) -> type:
         ttl = namespace.pop('_ttl', UNSET)
         namespace['.cache'] = {}
         namespace['.trash'] = {}
@@ -42,16 +43,16 @@ class SupermodelMeta(ModelMeta):
 
 
 class SupermodelIterator:
-    def __init__(self, model, iterator):
+    def __init__(self, model: Type['Supermodel'], iterator: AsyncIterator[dict]):
         self.model = model
         self.iterator = iterator
         self.iterable = None
 
-    def __aiter__(self):
+    def __aiter__(self) -> AsyncIterator['Supermodel']:
         self.iterable = self.iterator.__aiter__()
         return self
 
-    async def __anext__(self):
+    async def __anext__(self) -> 'Supermodel':
         raw = await self.iterable.__anext__()
         model = self.model(**raw)
         # noinspection PyProtectedMember
@@ -126,7 +127,7 @@ class Supermodel(Model, metaclass=SupermodelMeta):
     @classmethod
     async def create(cls, *args, **kwargs):
         model = cls(*args, **kwargs)
-        await cls._create(dict(model))
+        await cls._create(model.to_dict())
         cls._cache(model._id(), model)
         return model
 
@@ -162,19 +163,17 @@ class Supermodel(Model, metaclass=SupermodelMeta):
     async def update(self, **raw):
         attributes = getattr(self, '.attributes')
         id_ = self._id()
-        backup = dict(self)
+        new = copy(self)
+
+        for attr in attributes:
+            if attr in raw:
+                setattr(new, attr, raw[attr])
+
+        await self._update(id_, new.to_dict())
 
         for attr in attributes:
             if attr in raw:
                 setattr(self, attr, raw[attr])
-
-        try:
-            await self._update(id_, dict(self))
-        except Exception:
-            for attr in attributes:
-                setattr(self, attr, backup.get(attr))
-
-            raise
 
         self._cache(id_, self)
 

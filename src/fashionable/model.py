@@ -1,5 +1,6 @@
-from collections import OrderedDict
-from typing import Iterable, Mapping, Tuple, Union
+from copy import deepcopy
+from sys import version_info
+from typing import Any, Dict, Iterable, Mapping, Tuple, Union
 
 from .attribute import Attribute, UNSET
 from .modelerror import ModelError
@@ -12,11 +13,13 @@ __all__ = [
 
 
 class ModelMeta(type):
-    @classmethod
-    def __prepare__(mcs, name, bases, **kwargs):
-        return OrderedDict()
+    if version_info < (3, 7):
+        @classmethod
+        def __prepare__(mcs, *args, **kwargs):
+            from collections import OrderedDict
+            return OrderedDict()
 
-    def __init__(cls, name, bases, namespace):
+    def __init__(cls, name: str, bases: Tuple[type, ...], namespace: Dict[str, Any]):
         super().__init__(name, bases, namespace)
 
         slots = []
@@ -37,6 +40,17 @@ class ModelMeta(type):
 
 
 class Model(metaclass=ModelMeta):
+    @classmethod
+    def _to_dict(cls, obj: Any) -> dict:
+        if hasattr(obj, 'to_dict'):
+            obj = obj.to_dict()
+        elif hasattr(obj, 'toDict'):
+            obj = obj.toDict()
+        elif hasattr(obj, '__iter__') and not isinstance(obj, (str, bytes, bytearray)):
+            obj = type(obj)(cls._to_dict(o) for o in (obj.items() if isinstance(obj, dict) else obj))
+
+        return obj
+
     def __init__(self, *args, **kwargs):
         attributes = getattr(self, '.attributes')
 
@@ -53,26 +67,33 @@ class Model(metaclass=ModelMeta):
             value = getattr(self, attr)
 
             if value is not UNSET:
-                yield attr, dict(value) if isinstance(value, Model) else value
+                yield attr, value
 
     def __eq__(self, other: Union['Model', Mapping, Iterable, Tuple]):
-        if not isinstance(other, Model):
+        if not isinstance(other, type(self)):
             try:
-                other = validate(self.__class__, other, strict=False)
+                other = validate(type(self), other, strict=False)
             except (TypeError, ValueError, ModelError):
                 return NotImplemented
 
-        return dict(self) == dict(other)
+        return all(getattr(other, attr) == getattr(self, attr) for attr in getattr(self, '.attributes'))
 
     def __str__(self):
-        id_ = self._id()
-        return '{}({})'.format(self.__class__.__name__, '' if id_ is UNSET else id_)
+        return '{}({})'.format(type(self).__name__, self._id())
 
     def __repr__(self):
-        return '{}({})'.format(
-            self.__class__.__name__,
-            ', '.join('{}={!r}'.format(k, getattr(self, k)) for k, _ in self),
-        )
+        return '{}({})'.format(type(self).__name__, ', '.join('{}={!r}'.format(k, v) for k, v in self))
+
+    def __copy__(self) -> 'Model':
+        return type(self)(**dict(self))
+
+    def __deepcopy__(self, *args, **kwargs) -> 'Model':
+        return type(self)(**{k: deepcopy(v) for k, v in self})
 
     def _id(self):
-        return next(iter(self))[1]
+        return getattr(self, getattr(self, '.attributes')[0])
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {n: self._to_dict(v) for n, v in self}
+
+    toDict = to_dict

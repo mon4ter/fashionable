@@ -62,14 +62,14 @@ class Project(Supermodel):
 @app.get('/project/<id_>')
 async def project_get(request, id_):
     project = await Project.get(id_)
-    return json(dict(project))
+    return json(project.to_dict())
 
 
 @app.post('/project')
 async def project_create(request):
     project = await Project.create(**request.json)
     return json(
-        dict(project),
+        project.to_dict(),
         status=201,
         headers={'Location': '/project/' + project.id},
     )
@@ -79,7 +79,7 @@ async def project_create(request):
 async def project_update(request, id_):
     project = await Project.get(id_, fresh=True)
     await project.update(**request.json)
-    return json(dict(project))
+    return json(project.to_dict())
 
 
 @app.delete('/project/<id_>')

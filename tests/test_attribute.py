@@ -1,8 +1,8 @@
-from typing import Any
+from typing import Any, Optional
 
-from pytest import mark, raises
+from pytest import raises
 
-from fashionable import Attribute, UNSET
+from fashionable import Attribute, UNSET, Unset
 
 
 def test_name():
@@ -19,10 +19,11 @@ def test_name():
 def test_without_parameters():
     a = Attribute(Any)
     assert a.type is Any
+    assert a.strict is False
     assert a.default is UNSET
     assert a.limit is None
-    assert a.min is None
-    assert a.max is None
+    assert a.min is UNSET
+    assert a.max is UNSET
 
 
 def test_type():
@@ -33,9 +34,25 @@ def test_type():
     assert Attribute(str).type == str
 
 
-@mark.parametrize('default', ['', None])
-def test_default(default):
-    assert Attribute(str, default=default).default == default
+def test_default():
+    assert Attribute(Optional[str], default='').default == ''
+    assert Attribute(Optional[str], default=5).default == '5'
+    assert Attribute(Optional[str], default=None).default is None
+
+    with raises(ValueError):
+        Attribute(int, default='a')
+
+    with raises(TypeError):
+        Attribute(int, default='a', strict=True)
+
+    with raises(ValueError):
+        Attribute(int, default=0, min=1)
+
+    with raises(ValueError):
+        Attribute(int, default=1000, max=999)
+
+    with raises(ValueError):
+        Attribute(str, default='abc', limit=2)
 
 
 def test_limit():
@@ -74,3 +91,9 @@ def test_strict():
     with raises(TypeError):
         # noinspection PyTypeChecker
         Attribute(str, strict=5)
+
+
+def test_unset():
+    assert Unset() is UNSET
+    assert Unset() is Unset()
+    assert not UNSET

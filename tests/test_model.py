@@ -1,4 +1,5 @@
-from typing import List, Optional
+from copy import copy, deepcopy
+from typing import Dict, List, Optional
 
 from pytest import fail, raises
 
@@ -194,7 +195,7 @@ def test_iter():
         m = Attribute(M1)
         baz = Attribute(str)
 
-    assert dict(M2(M1('1'), '2')) == {'m': {'foo': '1'}, 'baz': '2'}
+    assert dict(M2(M1('1'), '2')) == {'m': M1('1'), 'baz': '2'}
 
 
 def test_id():
@@ -214,13 +215,18 @@ def test_id():
     assert str(M2('test', 123)) == "M2('123')"
 
     class M3(Model):
+        a = Attribute(Optional[int])
+
+    assert str(M3()) == 'M3(UNSET)'
+
+    class M4(Model):
         a = Attribute(int)
         b = Attribute(Optional[str])
 
         def _id(self):
             return self.b
 
-    assert str(M3(1)) == 'M3()'
+    assert str(M4(1)) == 'M4(UNSET)'
 
 
 def test_repr():
@@ -332,12 +338,22 @@ def test_implicit_none():
 
 
 def test_delete_attribute():
-    class M(Model):
+    class M1(Model):
         a = Attribute(Optional[int], default=432)
 
-    m = M(999)
-    del m.a
-    assert m.a == 432
+    m1 = M1(999)
+    del m1.a
+    assert m1.a == 432
+
+    class M2(Model):
+        some_name = Attribute(int)
+
+    m2 = M2(321)
+
+    with raises(AttributeError) as exc:
+        del m2.some_name
+
+    assert 'some_name' in str(exc)
 
 
 def test_invalid_attribute():
@@ -367,3 +383,63 @@ def test_compare_with_non_model():
     assert M(1) == 1
     assert 1 == M(1)
     assert M(1).__eq__('a') is NotImplemented
+
+
+def test_copy():
+    class M2(Model):
+        c = Attribute(int)
+
+    class M1(Model):
+        a = Attribute(int)
+        b = Attribute(M2)
+
+    m = M1(1, M2(2))
+    m1 = copy(m)
+    m2 = deepcopy(m)
+
+    m1.a = 3
+    m2.b.c = 4
+
+    assert m.a == 1
+    assert m.b.c == 2
+    assert m1.a == 3
+    assert m2.b.c == 4
+
+
+def test_to_dict():
+    class M1(Model):
+        a = Attribute(int)
+        b = Attribute(str)
+
+    class M2(Model):
+        x = Attribute(str)
+
+    class M3(Model):
+        lst = Attribute(List[M2])
+
+    class M4(Model):
+        key = Attribute(M1)
+        val = Attribute(Dict[str, M3])
+
+    m = M4((4, 5), {1: [10, 11], 2: [20, 21]})
+    d = {
+        'key': {
+            'a': 4,
+            'b': '5'
+        },
+        'val': {
+            '1': {
+                'lst': [
+                    {'x': '10'},
+                    {'x': '11'},
+                ]
+            },
+            '2': {
+                'lst': [
+                    {'x': '20'},
+                    {'x': '21'},
+                ]
+            }
+        }
+    }
+    assert m.to_dict() == d
