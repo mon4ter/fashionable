@@ -14,7 +14,7 @@ from fashionable import Attribute, Model
 
 
 class Project(Model):
-    id = Attribute(str, limit=32)
+    id = Attribute(str, max=32)
     name = Attribute(str)
     organization = Attribute(Optional[str])
     domain = Attribute(Optional[str])
@@ -36,7 +36,7 @@ app.db = ...
 
 class Project(Supermodel):
     _ttl = 300
-    id = Attribute(str, limit=32)
+    id = Attribute(str, max=32)
     name = Attribute(str)
     organization = Attribute(Optional[str])
     domain = Attribute(Optional[str])
@@ -69,7 +69,7 @@ async def project_get(request, id_):
 async def project_create(request):
     project = await Project.create(**request.json)
     return json(
-        project.to_dict(),
+        project,
         status=201,
         headers={'Location': '/project/' + project.id},
     )
@@ -79,7 +79,7 @@ async def project_create(request):
 async def project_update(request, id_):
     project = await Project.get(id_, fresh=True)
     await project.update(**request.json)
-    return json(project.to_dict())
+    return json(project)
 
 
 @app.delete('/project/<id_>')

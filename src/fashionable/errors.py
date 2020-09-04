@@ -1,9 +1,13 @@
 __all__ = [
+    'ArgError',
     'FashionableError',
+    'InvalidArgError',
+    'MissingArgError',
     'ModelAttributeError',
     'ModelError',
     'ModelTypeError',
     'ModelValueError',
+    'RetError',
     'ValidateError',
 ]
 
@@ -41,3 +45,26 @@ class ModelAttributeError(ModelError, AttributeError):
     def __init__(self, suffix: str = '', *, attr: str, **kwargs):
         super().__init__(self._concat("missing required attribute %(attr)s", suffix), attr=attr, **kwargs)
 
+
+# TODO refactor to FashionableError
+class ArgError(Exception):
+    # def __init__(self, fmt: str, arg: Arg, value: Any = UNSET):
+    def __init__(self, fmt: str, arg, value=None):
+        super().__init__(fmt.format(arg=arg, value=value))
+        self.arg = arg
+        self.value = value
+
+
+class MissingArgError(ArgError):
+    def __init__(self, *args, **kwargs):
+        super().__init__("missing required argument {arg.name!r} value", *args, **kwargs)
+
+
+class InvalidArgError(ArgError):
+    def __init__(self, *args, **kwargs):
+        super().__init__("invalid argument {arg.name!r} value {value!r}", *args, **kwargs)
+
+
+class RetError(ArgError):
+    def __init__(self, *args, **kwargs):
+        super().__init__("invalid call result value {value!r}", *args, **kwargs)
