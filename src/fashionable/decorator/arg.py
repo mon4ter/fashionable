@@ -10,9 +10,10 @@ __all__ = [
 
 
 class Arg:
-    __slots__ = ('name', 'type', 'default', 'is_positional', 'is_zipped')
+    __slots__ = ('func', 'name', 'type', 'default', 'is_positional', 'is_zipped')
 
-    def __init__(self, name: str, type_: type, default: Any, is_positional: bool, is_zipped: bool):
+    def __init__(self, func: str, name: str, type_: type, default: Any, is_positional: bool, is_zipped: bool):
+        self.func = func
         self.name = name
         self.type = type_
         self.default = default
@@ -21,7 +22,7 @@ class Arg:
 
     def __repr__(self) -> str:
         return '{}({}{}: {}{})'.format(
-            self.__class__.__name__,
+            type(self).__name__,
             {
                 (True, True): '*',
                 (True, False): '',
@@ -36,13 +37,13 @@ class Arg:
     def validate(self, value: Any) -> Any:
         if value is UNSET:
             if self.default is UNSET:
-                raise MissingArgError(self)
+                raise MissingArgError(func=self.func, arg=self.name)
             else:
                 result = self.default
         else:
             try:
                 result = validate(self.type, value)
             except ValidateError as exc:
-                raise InvalidArgError(self, value) from exc
+                raise InvalidArgError(func=self.func, arg=self.name) from exc
 
         return result

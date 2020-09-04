@@ -4,7 +4,7 @@ from typing import Any, Callable, Dict, Optional, Tuple
 
 from .arg import Arg
 from ..errors import ArgError, RetError
-from ..typedef import AsyncRet, Ret
+from ..typedef import AsyncRet, Ret, Typing, Value
 from ..unset import UNSET
 
 __all__ = [
@@ -13,19 +13,20 @@ __all__ = [
 
 
 class Func:
-    __slots__ = ('func', 'name', 'args', 'ret')
+    __slots__ = ('_func', '_name', '_args', '_ret', '_predefined')
 
     _POSITIONAL_KINDS = {Parameter.POSITIONAL_ONLY, Parameter.POSITIONAL_OR_KEYWORD, Parameter.VAR_POSITIONAL}
     _ZIPPED_KINDS = {Parameter.VAR_POSITIONAL, Parameter.VAR_KEYWORD}
 
     @classmethod
-    def from_inspect(cls, func: Callable, name: Optional[str], annotations: Dict[str, type]) -> 'Func':
+    def from_inspect(cls, func: Callable, name: Optional[str], annotations: Dict[str, Typing]) -> 'Func':
         if not name:
             name = func.__name__
 
         sign = signature(func)
 
         args = tuple(Arg(
+            name,
             parameter.name,
             Any if parameter.annotation is Parameter.empty else parameter.annotation,
             UNSET if parameter.default is Parameter.empty else parameter.default,
@@ -35,44 +36,41 @@ class Func:
 
         ret_annotation = sign.return_annotation
         ret_type = annotations.get('return', Any if ret_annotation is Signature.empty else ret_annotation)
-        ret = Arg('result', ret_type, UNSET, False, False) if ret_type else None
+        ret = Arg(name, 'return', ret_type, UNSET, False, False) if ret_type else None
 
         return cls(func, name, args, ret)
 
     def __init__(self, func: Callable, name: str, args: Tuple[Arg, ...], ret: Optional[Arg]):
-        self.func = func
-        self.name = name
-        self.args = args
-        self.ret = ret
+        self._func = func
+        self._name = name
+        self._args = args
+        self._ret = ret
+        self._predefined = {}
 
-    def _validate(self, params: Any, customs: Dict[type, Any]) -> Tuple[list, dict]:
-        list_params = []
-        dict_params = {}
+    def add_predefined(self, typ: Typing, value: Value):
+        self._predefined[typ] = value
 
-        if isinstance(params, list):
-            list_params = params.copy()
-        elif isinstance(params, dict):
-            dict_params = params.copy()
-        else:
-            list_params = [params]
-
-        args = []
-        kwargs = {}
+    def _validate(self, *args, **kwargs) -> Tuple[list, dict]:
+        new_args = []
+        new_kwargs = {}
         recover_allowed = True
 
-        for arg in self.args:
+        list_params = list(args)
+        dict_params = dict(kwargs)
+
+        for arg in self._args:
             if arg.is_zipped:
                 for param_name in list(dict_params):
-                    kwargs[param_name] = arg.validate(dict_params.pop(param_name))
+                    new_kwargs[param_name] = arg.validate(dict_params.pop(param_name))
                     recover_allowed = False
 
                 while list_params:
-                    args.append(arg.validate(list_params.pop(0)))
+                    new_args.append(arg.validate(list_params.pop(0)))
                     recover_allowed = False
 
                 continue
 
-            value = customs.get(arg.type, UNSET)
+            value = self._predefined.get(arg.type, UNSET)
 
             name = arg.name
 
@@ -85,27 +83,27 @@ class Func:
                     if not recover_allowed:
                         raise
 
-                    value = arg.validate(params)
+                    value = arg.validate(*args, **kwargs)
 
             if arg.is_positional:
-                args.append(value)
+                new_args.append(value)
             else:
-                kwargs[name] = value
+                new_kwargs[name] = value
 
             recover_allowed = False
 
-        return args, kwargs
+        return new_args, new_kwargs
 
     def _in(self, *args, **kwargs) -> Ret:
         args, kwargs = self._validate(*args, **kwargs)
-        return self.func(*args, **kwargs)
+        return self._func(*args, **kwargs)
 
     def _out(self, ret: Any) -> Any:
-        if self.ret:
+        if self._ret:
             try:
-                ret = self.ret.validate(ret)
+                ret = self._ret.validate(ret)
             except ArgError as err:
-                raise RetError(err.arg, ret) from err
+                raise RetError(func=self._name) from err
 
         return ret
 

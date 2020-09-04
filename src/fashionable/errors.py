@@ -11,7 +11,6 @@ __all__ = [
     'ValidateError',
 ]
 
-
 ValidateError = TypeError, ValueError, AttributeError
 
 
@@ -46,25 +45,25 @@ class ModelAttributeError(ModelError, AttributeError):
         super().__init__(self._concat("missing required attribute %(attr)s", suffix), attr=attr, **kwargs)
 
 
-# TODO refactor to FashionableError
-class ArgError(Exception):
-    # def __init__(self, fmt: str, arg: Arg, value: Any = UNSET):
-    def __init__(self, fmt: str, arg, value=None):
-        super().__init__(fmt.format(arg=arg, value=value))
-        self.arg = arg
-        self.value = value
+class FuncError(FashionableError):
+    def __init__(self, suffix: str = '', *, func: str, **kwargs):
+        super().__init__(self._concat("Invalid usage of %(func)s", suffix), func=func, **kwargs)
+
+
+class ArgError(FuncError):
+    pass
 
 
 class MissingArgError(ArgError):
-    def __init__(self, *args, **kwargs):
-        super().__init__("missing required argument {arg.name!r} value", *args, **kwargs)
+    def __init__(self, suffix: str = '', *, arg: str, **kwargs):
+        super().__init__(self._concat("missing required argument %(arg)s", suffix), arg=arg, **kwargs)
 
 
 class InvalidArgError(ArgError):
-    def __init__(self, *args, **kwargs):
-        super().__init__("invalid argument {arg.name!r} value {value!r}", *args, **kwargs)
+    def __init__(self, suffix: str = '', *, arg: str, **kwargs):
+        super().__init__(self._concat("invalid argument %(arg)s value", suffix), arg=arg, **kwargs)
 
 
-class RetError(ArgError):
-    def __init__(self, *args, **kwargs):
-        super().__init__("invalid call result value {value!r}", *args, **kwargs)
+class RetError(FuncError):
+    def __init__(self, suffix: str = '', **kwargs):
+        super().__init__(self._concat("invalid return value", suffix), **kwargs)
