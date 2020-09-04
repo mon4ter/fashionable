@@ -12,6 +12,6 @@ def fashionable(name_: Optional[str] = None, **annotations: type) -> Callable:
         return fashionable()(name_)
 
     def deco(func: Callable) -> Func:
-        return Func.from_inspect(func, name_, annotations)
+        return Func.fashionable(func, name_, annotations)
 
     return deco
