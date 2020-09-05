@@ -3,7 +3,7 @@ from inspect import Signature
 from typing import Callable, Dict, Optional, Tuple
 
 from .arg import Arg
-from ..errors import ArgError, InvalidArgError, MissingArgError, RetError, ValidateError
+from ..errors import InvalidArgError, MissingArgError, RetError, ValidateError
 from ..typedef import Args, AsyncRet, Kwargs, Ret, Typing, Value
 from ..unset import UNSET
 from ..validation import validate
@@ -30,6 +30,8 @@ class Func(Signature):
         for parameter in self.parameters.values():
             parameter._annotation = annotations.get(parameter.name, parameter.annotation)
 
+        self._return_annotation = annotations.get('return_', self.return_annotation)
+
         return self
 
     def __init__(self, *args, **kwargs):
@@ -55,6 +57,7 @@ class Func(Signature):
     def _validate_arg(self, arg: Arg, value: Value) -> Value:
         if value is UNSET:
             if arg.default is Arg.empty:
+                # TODO test MissingArgError
                 raise MissingArgError(func=self._name, arg=arg.name)
             else:
                 value = arg.default
@@ -62,6 +65,7 @@ class Func(Signature):
             try:
                 value = validate(arg.annotation, value)
             except ValidateError as exc:
+                # TODO test InvalidArgError
                 raise InvalidArgError(func=self._name, arg=arg.name) from exc
 
         return value
@@ -69,7 +73,7 @@ class Func(Signature):
     def _validate(self, args: Args, kwargs: Kwargs) -> Tuple[Args, Kwargs]:
         new_args = []
         new_kwargs = {}
-        recover_allowed = True
+        # recover_allowed = True
 
         list_params = list(args)
         dict_params = dict(kwargs)
@@ -79,11 +83,11 @@ class Func(Signature):
                 if arg.is_positional:
                     while list_params:
                         new_args.append(self._validate_arg(arg, list_params.pop(0)))
-                        recover_allowed = False
+                        # recover_allowed = False
                 else:
                     for param_name in list(dict_params):
                         new_kwargs[param_name] = self._validate_arg(arg, dict_params.pop(param_name))
-                        recover_allowed = False
+                        # recover_allowed = False
 
                 continue
 
@@ -92,24 +96,24 @@ class Func(Signature):
             name = arg.name
 
             if value is UNSET:
-                try:
-                    value = self._validate_arg(
-                        arg,
-                        dict_params.pop(name) if name in dict_params else list_params.pop(0) if list_params else UNSET
-                    )
-                except ArgError:
-                    if not recover_allowed:
-                        raise
-
-                    # TODO fix recover
-                    value = self._validate_arg(arg, *args, **kwargs)
+                # TODO fix recover
+                # try:
+                value = self._validate_arg(
+                    arg,
+                    dict_params.pop(name) if name in dict_params else list_params.pop(0) if list_params else UNSET
+                )
+                # except ArgError:
+                #     if not recover_allowed:
+                #         raise
+                #
+                #     value = self._validate_arg(arg, *args, **kwargs)
 
             if arg.is_positional:
                 new_args.append(value)
             else:
                 new_kwargs[name] = value
 
-            recover_allowed = False
+            # recover_allowed = False
 
         return tuple(new_args), new_kwargs
 
@@ -122,6 +126,7 @@ class Func(Signature):
             try:
                 ret = validate(self.return_annotation, ret)
             except ValidateError as err:
+                # TODO test RetError
                 raise RetError(func=self._name) from err
 
         return ret
