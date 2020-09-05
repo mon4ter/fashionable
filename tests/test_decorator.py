@@ -68,9 +68,9 @@ def test_default():
 
 def test_simple_annotations():
     @fashionable
-    def simple_annotations(i: int, *s_: str, l: list, **s: set):
-        return i, s_[0], l, next(iter(s.values()))
+    def simple_annotations(a: int, *b: str, c: list, **d: set):
+        return a, b[0], c, next(iter(d.values()))
 
     # noinspection PyTypeChecker
-    assert simple_annotations('1', 2, l='3', x='4') == (1, '2', ['3'], {'4'})
-    assert str(simple_annotations) == 'simple_annotations(i: int, *s_: str, l: list, **s: set)'
+    assert simple_annotations('1', 2, c='3', x='4') == (1, '2', ['3'], {'4'})
+    assert str(simple_annotations) == 'simple_annotations(a: int, *b: str, c: list, **d: set)'

@@ -1,9 +1,9 @@
 from asyncio import iscoroutine
-from inspect import Parameter, Signature
+from inspect import Signature
 from typing import Callable, Dict, Optional, Tuple
 
 from .arg import Arg
-from ..errors import ArgError, RetError, ValidateError
+from ..errors import ArgError, InvalidArgError, MissingArgError, RetError, ValidateError
 from ..typedef import Args, AsyncRet, Kwargs, Ret, Typing, Value
 from ..unset import UNSET
 from ..validation import validate
@@ -52,6 +52,20 @@ class Func(Signature):
     def add_predefined(self, typ: Typing, value: Value):
         self._predefined[typ] = value
 
+    def _validate_arg(self, arg: Arg, value: Value) -> Value:
+        if value is UNSET:
+            if arg.default is Arg.empty:
+                raise MissingArgError(func=self._name, arg=arg.name)
+            else:
+                value = arg.default
+        elif arg.annotation is not Arg.empty:
+            try:
+                value = validate(arg.annotation, value)
+            except ValidateError as exc:
+                raise InvalidArgError(func=self._name, arg=arg.name) from exc
+
+        return value
+
     def _validate(self, args: Args, kwargs: Kwargs) -> Tuple[Args, Kwargs]:
         new_args = []
         new_kwargs = {}
@@ -64,11 +78,11 @@ class Func(Signature):
             if arg.is_zipped:
                 if arg.is_positional:
                     while list_params:
-                        new_args.append(arg.validate(list_params.pop(0)))
+                        new_args.append(self._validate_arg(arg, list_params.pop(0)))
                         recover_allowed = False
                 else:
                     for param_name in list(dict_params):
-                        new_kwargs[param_name] = arg.validate(dict_params.pop(param_name))
+                        new_kwargs[param_name] = self._validate_arg(arg, dict_params.pop(param_name))
                         recover_allowed = False
 
                 continue
@@ -79,14 +93,16 @@ class Func(Signature):
 
             if value is UNSET:
                 try:
-                    value = arg.validate(
+                    value = self._validate_arg(
+                        arg,
                         dict_params.pop(name) if name in dict_params else list_params.pop(0) if list_params else UNSET
                     )
                 except ArgError:
                     if not recover_allowed:
                         raise
 
-                    value = arg.validate(*args, **kwargs)
+                    # TODO fix recover
+                    value = self._validate_arg(arg, *args, **kwargs)
 
             if arg.is_positional:
                 new_args.append(value)

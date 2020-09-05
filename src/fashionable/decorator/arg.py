@@ -1,9 +1,5 @@
 from inspect import Parameter
-
-from ..errors import InvalidArgError, MissingArgError, ValidateError
-from ..typedef import Value
-from ..unset import UNSET
-from ..validation import validate
+from sys import version_info
 
 __all__ = [
     'Arg',
@@ -22,16 +18,6 @@ class Arg(Parameter):
     def is_zipped(self) -> bool:
         return self.kind in self._ZIPPED_KINDS
 
-    def validate(self, value: Value) -> Value:
-        if value is UNSET:
-            if self.default is Parameter.empty:
-                raise MissingArgError(func=..., arg=self.name)
-            else:
-                value = self.default
-        elif self.annotation is not Parameter.empty:
-            try:
-                value = validate(self.annotation, value)
-            except ValidateError as exc:
-                raise InvalidArgError(func=..., arg=self.name) from exc
-
-        return value
+    if version_info < (3, 7):
+        def __str__(self) -> str:
+            return super().__str__().replace(':', ': ')
