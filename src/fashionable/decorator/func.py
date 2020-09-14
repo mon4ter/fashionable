@@ -57,7 +57,6 @@ class Func(Signature):
     def _validate_arg(self, arg: Arg, value: Value) -> Value:
         if value is UNSET:
             if arg.default is Arg.empty:
-                # TODO test MissingArgError
                 raise MissingArgError(func=self._name, arg=arg.name)
             else:
                 value = arg.default
@@ -65,7 +64,6 @@ class Func(Signature):
             try:
                 value = validate(arg.annotation, value)
             except ValidateError as exc:
-                # TODO test InvalidArgError
                 raise InvalidArgError(func=self._name, arg=arg.name) from exc
 
         return value
@@ -126,7 +124,6 @@ class Func(Signature):
             try:
                 ret = validate(self.return_annotation, ret)
             except ValidateError as err:
-                # TODO test RetError
                 raise RetError(func=self._name) from err
 
         return ret

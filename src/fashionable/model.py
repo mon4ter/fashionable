@@ -17,7 +17,6 @@ class Model(metaclass=ModelMeta):
         if hasattr(obj, 'to_dict'):
             obj = obj.to_dict()
         elif hasattr(obj, 'toDict'):
-            # TODO test toDict
             obj = obj.toDict()
         elif hasattr(obj, '__iter__') and not isinstance(obj, (str, bytes, bytearray)):
             obj = type(obj)(cls._to_dict(o) for o in (obj.items() if isinstance(obj, dict) else obj))

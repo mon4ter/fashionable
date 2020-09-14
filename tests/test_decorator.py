@@ -3,9 +3,9 @@ import decimal
 import pathlib
 from typing import Dict, Set, Tuple
 
-from pytest import mark
+from pytest import mark, raises
 
-from fashionable import fashionable
+from fashionable import InvalidArgError, MissingArgError, RetError, fashionable
 
 
 def test_empty():
@@ -196,3 +196,39 @@ async def test_coroutine():
 
     # noinspection PyTypeChecker
     assert (await coroutine(1, '2')) == 11
+    assert str(coroutine) == 'coroutine(a: str, b: int) -> int'
+
+
+def test_missing_arg():
+    @fashionable
+    def missing_arg(some_name):
+        pass
+
+    with raises(MissingArgError) as err:
+        missing_arg()
+
+    assert str(err.value) == 'Invalid usage of missing_arg: missing required argument some_name'
+
+
+def test_invalid_arg():
+    @fashionable
+    def invalid_arg(some_name: int):
+        pass
+
+    with raises(InvalidArgError) as err:
+        # noinspection PyTypeChecker
+        invalid_arg('a')
+
+    assert str(err.value) == 'Invalid usage of invalid_arg: invalid argument some_name value'
+
+
+def test_ret_error():
+    @fashionable
+    def ret_error() -> int:
+        # noinspection PyTypeChecker
+        return 'a'
+
+    with raises(RetError) as err:
+        ret_error()
+
+    assert str(err.value) == 'Invalid usage of ret_error: invalid return value'

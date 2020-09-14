@@ -2,7 +2,7 @@ from typing import Type
 
 from .baseattribute import BaseAttribute
 from .model import Model
-from .errors import ModelAttributeError, ModelTypeError, ModelValueError, ValidateError
+from .errors import ModelAttributeError, ModelError, ModelTypeError, ModelValueError, ValidateError
 from .typedef import Value
 from .unset import UNSET
 from .validation import validate
@@ -26,11 +26,8 @@ class Attribute(BaseAttribute):
                 err_type = ModelAttributeError
             elif isinstance(exc, ValueError):
                 err_type = ModelTypeError
-            elif isinstance(exc, TypeError):
-                err_type = ModelTypeError
             else:
-                # TODO test exc bypass
-                raise
+                err_type = ModelTypeError
 
             raise err_type(model=type(model).__name__, attr=self._name) from exc
 

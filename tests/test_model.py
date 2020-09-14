@@ -394,9 +394,18 @@ def test_copy():
 
 
 def test_to_dict():
+    class Foo:
+        def __init__(self, x):
+            self.x = x
+
+        @staticmethod
+        def toDict() -> dict:
+            return {'foo': 1, 'bar': 3}
+
     class M1(Model):
         a = Attribute(int)
         b = Attribute(str)
+        foo = Attribute(Foo)
 
     class M2(Model):
         x = Attribute(str)
@@ -408,11 +417,12 @@ def test_to_dict():
         key = Attribute(M1)
         val = Attribute(Dict[str, M3])
 
-    m = M4((4, 5), {1: [10, 11], 2: [20, 21]})
+    m = M4((4, 5, 6), {1: [10, 11], 2: [20, 21]})
     d = {
         'key': {
             'a': 4,
-            'b': '5'
+            'b': '5',
+            'foo': {'foo': 1, 'bar': 3}
         },
         'val': {
             '1': {
