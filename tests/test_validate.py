@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Mapping, NewType, Optional, Set, Tuple, Type
 
 from pytest import mark, raises
 
-from fashionable import Attribute, Model, validate
+from fashionable import Attribute, Model, UNSET, validate
 from fashionable.typedef import Typing
 
 Bool = NewType('Bool', bool)  # Because Union[float, int, bool] shrinks to Union[float, int]
@@ -43,6 +43,7 @@ class Params(Model):
     (Tuple[int, int, int],            ['2', '2', '3'],                        (2, 2, 3)),
     (Optional[int],                   3,                                      3),
     (Optional[str],                   None,                                   None),
+    (Optional[str],                   UNSET,                                  UNSET),
     (Optional[int],                   '3',                                    3),
     (Optional[int],                   None,                                   None),
     (Optional[Tuple[int, int, int]],  ['2', '2', '3'],                        (2, 2, 3)),
@@ -69,8 +70,6 @@ class Params(Model):
     (Typing,                          Mapping[str, int],                      Mapping[str, int]),
     (Typing,                          Any,                                    Any),
     (dict,                            Pair(1, 2),                             {'a': 1, 'b': 2}),
-    (Params,                          [1, 2, [3, 4]],                         Params('1', 2, C(3.0, 4.0))),
-    (Params,                          {'a': 1, 'c': {'x': 2, 'y': 3}},        Params('1', c=C(2.0, 3.0))),
 ])
 def test_validate(typ, value, result):
     assert validate(typ, value) == result

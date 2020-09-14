@@ -1,8 +1,8 @@
 from typing import Type
 
 from .baseattribute import BaseAttribute
+from .errors import ModelAttributeError, ModelTypeError, ModelValueError, ValidateError
 from .model import Model
-from .errors import ModelAttributeError, ModelError, ModelTypeError, ModelValueError, ValidateError
 from .typedef import Value
 from .unset import UNSET
 from .validation import validate
@@ -17,22 +17,20 @@ class Attribute(BaseAttribute):
         return getattr(model, self._private_name)
 
     def __set__(self, model: Model, value: Value):
-        unset = value is UNSET
+        if value is UNSET and self._default is not UNSET:
+            value = self._default
+        else:
+            try:
+                value = validate(self.type, value, self.strict)
+            except ValidateError as exc:
+                if isinstance(exc, AttributeError):
+                    err_type = ModelAttributeError
+                elif isinstance(exc, ValueError):
+                    err_type = ModelValueError
+                else:
+                    err_type = ModelTypeError
 
-        try:
-            value = validate(self.type, None if unset else value, self.strict)
-        except ValidateError as exc:
-            if unset or isinstance(exc, AttributeError):
-                err_type = ModelAttributeError
-            elif isinstance(exc, ValueError):
-                err_type = ModelTypeError
-            else:
-                err_type = ModelTypeError
-
-            raise err_type(model=type(model).__name__, attr=self._name) from exc
-
-        if unset:
-            value = self.default
+                raise err_type(model=type(model).__name__, attr=self._name) from exc
 
         iterable = hasattr(value, '__iter__')
 

@@ -6,10 +6,12 @@ __all__ = [
 
 class Unset:
     def __new__(cls):
-        if not hasattr(cls, '.instance'):
-            setattr(cls, '.instance', super().__new__(cls))
+        attr = '.instance'
 
-        return getattr(cls, '.instance')
+        if not hasattr(cls, attr):
+            setattr(cls, attr, super().__new__(cls))
+
+        return getattr(cls, attr)
 
     def __bool__(self) -> bool:
         return False

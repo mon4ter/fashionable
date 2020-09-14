@@ -1,8 +1,8 @@
 from .attribute import *
 from .baseattribute import *
 from .decorator import *
-from .model import *
 from .errors import *
+from .model import *
 from .modelmeta import *
 from .supermodel import *
 from .unset import *
@@ -12,8 +12,8 @@ __all__ = [
     *attribute.__all__,
     *baseattribute.__all__,
     *decorator.__all__,
-    *model.__all__,
     *errors.__all__,
+    *model.__all__,
     *modelmeta.__all__,
     *supermodel.__all__,
     *unset.__all__,

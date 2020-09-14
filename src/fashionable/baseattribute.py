@@ -33,7 +33,7 @@ class BaseAttribute:
     def type(self, value: Typing):
         try:
             validate(Typing, value, strict=True)
-        except (TypeError, ValueError):
+        except ValidateError:
             raise TypeError("Invalid {}.type: must be a type, not {!r}".format(type(self).__name__, value))
 
         self._type = value

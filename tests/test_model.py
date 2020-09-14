@@ -3,7 +3,7 @@ from typing import Dict, List, Optional
 
 from pytest import fail, raises
 
-from fashionable import Attribute, Model, FashionableError, ModelError
+from fashionable import Attribute, FashionableError, Model, ModelError
 
 
 def test_attributes():
@@ -99,7 +99,7 @@ def test_default():
     default = 'bar'
 
     class M(Model):
-        foo = Attribute(Optional[str], default=default)
+        foo = Attribute(str, default=default)
 
     assert M().foo == default
     assert M('not bar').foo != default

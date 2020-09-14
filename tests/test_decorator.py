@@ -1,11 +1,11 @@
 import datetime
 import decimal
 import pathlib
-from typing import Dict, Set, Tuple
+from typing import Dict, Optional, Set, Tuple
 
 from pytest import mark, raises
 
-from fashionable import InvalidArgError, MissingArgError, RetError, fashionable
+from fashionable import Attribute, InvalidArgError, MissingArgError, Model, RetError, fashionable
 
 
 def test_empty():
@@ -202,7 +202,7 @@ async def test_coroutine():
 def test_missing_arg():
     @fashionable
     def missing_arg(some_name):
-        pass
+        return some_name
 
     with raises(MissingArgError) as err:
         missing_arg()
@@ -213,7 +213,7 @@ def test_missing_arg():
 def test_invalid_arg():
     @fashionable
     def invalid_arg(some_name: int):
-        pass
+        return some_name
 
     with raises(InvalidArgError) as err:
         # noinspection PyTypeChecker
@@ -232,3 +232,23 @@ def test_ret_error():
         ret_error()
 
     assert str(err.value) == 'Invalid usage of ret_error: invalid return value'
+
+
+def test_recover():
+    class Params(Model):
+        a = Attribute(str)
+        b = Attribute(str)
+        c = Attribute(int, default=0)
+        d = Attribute(Optional[float])
+
+    @fashionable
+    def recover(p: Params) -> dict:
+        return p.to_dict()
+
+    # noinspection PyTypeChecker
+    assert recover(1, 2) == {'a': '1', 'b': '2', 'c': 0}
+    assert recover(3, 4, 5) == {'a': '3', 'b': '4', 'c': 5}
+    assert recover(6, 7, 8, 9) == {'a': '6', 'b': '7', 'c': 8, 'd': 9.}
+    assert recover(b=1, a=2) == {'a': '2', 'b': '1', 'c': 0}
+    assert recover(c=3, b=4, a=5) == {'a': '5', 'b': '4', 'c': 3}
+    assert recover(b=6, d=7, c=8, a=9) == {'a': '9', 'b': '6', 'c': 8, 'd': 7.}
