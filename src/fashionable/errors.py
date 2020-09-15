@@ -1,12 +1,15 @@
 __all__ = [
+    'ArgError',
     'FashionableError',
+    'InvalidArgError',
+    'MissingArgError',
     'ModelAttributeError',
     'ModelError',
     'ModelTypeError',
     'ModelValueError',
+    'RetError',
     'ValidateError',
 ]
-
 
 ValidateError = TypeError, ValueError, AttributeError
 
@@ -41,3 +44,26 @@ class ModelAttributeError(ModelError, AttributeError):
     def __init__(self, suffix: str = '', *, attr: str, **kwargs):
         super().__init__(self._concat("missing required attribute %(attr)s", suffix), attr=attr, **kwargs)
 
+
+class FuncError(FashionableError):
+    def __init__(self, suffix: str = '', *, func: str, **kwargs):
+        super().__init__(self._concat("Invalid usage of %(func)s", suffix), func=func, **kwargs)
+
+
+class ArgError(FuncError):
+    pass
+
+
+class MissingArgError(ArgError):
+    def __init__(self, suffix: str = '', *, arg: str, **kwargs):
+        super().__init__(self._concat("missing required argument %(arg)s", suffix), arg=arg, **kwargs)
+
+
+class InvalidArgError(ArgError):
+    def __init__(self, suffix: str = '', *, arg: str, **kwargs):
+        super().__init__(self._concat("invalid argument %(arg)s value", suffix), arg=arg, **kwargs)
+
+
+class RetError(FuncError):
+    def __init__(self, suffix: str = '', **kwargs):
+        super().__init__(self._concat("invalid return value", suffix), **kwargs)

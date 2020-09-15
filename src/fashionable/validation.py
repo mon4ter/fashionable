@@ -4,10 +4,13 @@ from typing import Any, Dict, Iterable, List, Mapping, Set, Tuple, Type, Union
 
 from .errors import ValidateError
 from .typedef import Typing
+from .unset import UNSET
 
 __all__ = [
     'validate',
 ]
+
+NoneType = type(None)
 
 
 def _get_origin(typ: Typing) -> Typing:
@@ -28,11 +31,15 @@ def _isinstance(value: Typing, types: Tuple[Typing, ...]) -> bool:
     return any(_get_origin(t) == origin for t in types)
 
 
+def _is_tuple(obj: Any) -> bool:
+    return isinstance(obj, (Tuple, Iterable))
+
+
 def _validate_union(typ: Typing, value: Any, strict: bool) -> Any:
     for strict, element_type in product(range(1, strict - 1, -1), typ.__args__):
         try:
             return _validate(element_type, value, strict)
-        except (TypeError, ValueError):
+        except ValidateError:
             pass
     else:
         raise TypeError
@@ -62,7 +69,7 @@ def _validate_iterable(typ: Typing, iterable: Iterable, strict: bool) -> Iterabl
 
 
 def _validate_tuple(typ: Typing, tpl: Union[Tuple, Iterable], strict: bool) -> Tuple:
-    if not isinstance(tpl, (Tuple, Iterable)):
+    if not _is_tuple(tpl):
         raise TypeError
 
     tuple_type = _get_extra(typ)
@@ -72,10 +79,12 @@ def _validate_tuple(typ: Typing, tpl: Union[Tuple, Iterable], strict: bool) -> T
 
 
 def _validate(typ: Typing, value: Any, strict: bool) -> Any:
+    unset = value is UNSET
+
     if hasattr(typ, '__supertype__'):
         typ = typ.__supertype__
 
-    if typ is Any or _isinstance(typ, (Type,)) and _isinstance(value, (typ.__args__[0],)):
+    if typ is Any or unset and typ is NoneType or _isinstance(typ, (Type,)) and _isinstance(value, (typ.__args__[0],)):
         pass
     elif _isinstance(typ, (Union,)):
         value = _validate_union(typ, value, strict)
@@ -86,6 +95,9 @@ def _validate(typ: Typing, value: Any, strict: bool) -> Any:
     elif _isinstance(typ, (Tuple,)):
         value = _validate_tuple(typ, value, strict)
     elif not isinstance(value, typ):
+        if unset:
+            raise AttributeError
+
         if strict:
             raise TypeError
 
@@ -94,8 +106,11 @@ def _validate(typ: Typing, value: Any, strict: bool) -> Any:
         except ValidateError:
             if isinstance(value, Mapping):
                 value = typ(**value)
-            elif isinstance(value, (Iterable, tuple)):
-                value = typ(*value)
+            elif _is_tuple(value):
+                if len(value) == 2 and _is_tuple(value[0]) and isinstance(value[1], Mapping):
+                    value = typ(*value[0], **value[1])
+                else:
+                    value = typ(*value)
             else:
                 raise
 
