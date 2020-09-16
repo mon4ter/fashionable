@@ -1,10 +1,11 @@
 from asyncio import iscoroutine
+from functools import partial
 from inspect import Signature
 from typing import Callable, Dict, Optional, Tuple
 
 from .arg import Arg
 from ..errors import ArgError, InvalidArgError, MissingArgError, RetError, ValidateError
-from ..typedef import Args, AsyncRet, Kwargs, Ret, Typing, Value
+from ..typedef import Args, AsyncRet, Kwargs, Ret, Typing, Value, Predefined
 from ..unset import UNSET
 from ..validation import validate
 
@@ -14,7 +15,7 @@ __all__ = [
 
 
 class Func(Signature):
-    __slots__ = ('_func', '_name', '_predefined')
+    __slots__ = ('_func', '_name')
 
     _parameter_cls = Arg
 
@@ -38,7 +39,6 @@ class Func(Signature):
         super().__init__(*args, **kwargs)
         self._func = None
         self._name = None
-        self._predefined = {}
 
     def __str__(self) -> str:
         return self._name + super().__str__()
@@ -50,9 +50,6 @@ class Func(Signature):
     @property
     def name(self) -> str:
         return self._name
-
-    def add_predefined(self, typ: Typing, value: Value):
-        self._predefined[typ] = value
 
     def _validate_arg(self, arg: Arg, value: Value) -> Value:
         if value is UNSET:
@@ -68,7 +65,7 @@ class Func(Signature):
 
         return value
 
-    def _validate(self, args: Args, kwargs: Kwargs) -> Tuple[Args, Kwargs]:
+    def _validate(self, args: Args, kwargs: Kwargs, predefined: Predefined) -> Tuple[Args, Kwargs]:
         new_args = []
         new_kwargs = {}
         recover_allowed = True
@@ -89,9 +86,8 @@ class Func(Signature):
 
                 continue
 
-            value = self._predefined.get(arg.annotation, UNSET)
-
             name = arg.name
+            value = predefined.get(arg.annotation, UNSET)
 
             if value is UNSET:
                 try:
@@ -114,8 +110,8 @@ class Func(Signature):
 
         return tuple(new_args), new_kwargs
 
-    def _in(self, *args, **kwargs) -> Ret:
-        args, kwargs = self._validate(args, kwargs)
+    def _in(self, args: Args, kwargs: Kwargs, predefined: Predefined) -> Ret:
+        args, kwargs = self._validate(args, kwargs, predefined)
         return self._func(*args, **kwargs)
 
     def _out(self, ret: Value) -> Value:
@@ -130,8 +126,8 @@ class Func(Signature):
     async def _async_out(self, ret: AsyncRet) -> Value:
         return self._out(await ret)
 
-    def __call__(self, *args, **kwargs) -> Ret:
-        ret = self._in(*args, **kwargs)
+    def _call(self, predefined: Predefined, *args: Value, **kwargs: Value) -> Ret:
+        ret = self._in(args, kwargs, predefined)
 
         if iscoroutine(ret):
             ret = self._async_out(ret)
@@ -139,3 +135,9 @@ class Func(Signature):
             ret = self._out(ret)
 
         return ret
+
+    def __getitem__(self, predefined: Predefined) -> Callable[..., Ret]:
+        return partial(self._call, predefined)
+
+    def __call__(self, *args: Value, **kwargs: Value) -> Ret:
+        return self._call({}, *args, **kwargs)

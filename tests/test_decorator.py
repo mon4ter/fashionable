@@ -163,18 +163,17 @@ class Ctx:
         self.x = x
 
 
-def test_predefined():
+def test_with_predefined():
     @fashionable
-    def predefined(c: Ctx) -> int:
+    def with_predefined(c: Ctx, x: int) -> int:
         c.x += 1
-        return c.x
+        return c.x + x
 
-    ctx = Ctx(0)
-    predefined.add_predefined(Ctx, ctx)
+    predefined = {Ctx: Ctx(4)}
 
-    assert predefined() == 1
-    assert predefined() == 2
-    assert str(predefined) == 'predefined(c: test_decorator.Ctx) -> int'
+    assert with_predefined[predefined](5) == 10
+    assert with_predefined[predefined](6) == 12
+    assert str(with_predefined) == 'with_predefined(c: test_decorator.Ctx, x: int) -> int'
 
 
 def test_func():

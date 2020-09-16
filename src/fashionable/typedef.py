@@ -9,6 +9,7 @@ __all__ = [
     'Kwargs',
     'Limiter',
     'OptionalTyping',
+    'Predefined',
     'Ret',
     'T',
     'Typing',
@@ -29,3 +30,4 @@ else:
     Typing = Union[type, Type[Any], Type[Optional[T]], Type[Mapping], Type[Tuple]]
 
 OptionalTyping = Union[Typing, Unset]
+Predefined = Dict[Typing, Value]
