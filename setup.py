@@ -11,7 +11,7 @@ with open('README.md') as fh:
 setup(
     name='fashionable',
     version=version,
-    packages=['fashionable'],
+    packages=['fashionable', 'fashionable.decorator'],
     package_dir={'': 'src'},
     setup_requires=['pytest-runner'],
     tests_require=['pytest', 'pytest-asyncio', 'pytest-cov'],
