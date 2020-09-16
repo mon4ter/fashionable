@@ -77,7 +77,8 @@ def test_validate(typ, value, result):
 
 @mark.parametrize('typ, value, exc', [
     (int,               'a',        ValueError),
-    (Union[float, int], 'a',        TypeError),
+    (Union[float, int], None,       TypeError),
+    (Union[float, int], 'a',        ValueError),
     (Dict[str, int],    True,       TypeError),
     (Dict[str, int],    'a',        ValueError),
     (Dict[str, int],    {'a': 'a'}, ValueError),

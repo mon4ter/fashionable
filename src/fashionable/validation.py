@@ -36,13 +36,15 @@ def _is_tuple(obj: Any) -> bool:
 
 
 def _validate_union(typ: Typing, value: Any, strict: bool) -> Any:
+    last = TypeError
+
     for strict, element_type in product(range(1, strict - 1, -1), typ.__args__):
         try:
             return _validate(element_type, value, strict)
-        except ValidateError:
-            pass
+        except ValidateError as exc:
+            last = exc
     else:
-        raise TypeError
+        raise last
 
 
 def _validate_mapping(typ: Typing, mapping: Union[Mapping, Iterable], strict: bool) -> Mapping:
