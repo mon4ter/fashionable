@@ -6,6 +6,20 @@
 
 Decorate your project with some fashionable supermodels.
 
+### Decorator example
+```python
+from typing import Set
+
+from fashionable import fashionable
+
+@fashionable
+def bits_to_binary_like(bits: Set[int], length: int = 8) -> int:
+    bits.add(0)
+    return ''.join(str(int(b in bits)) for b in range(length, 0, -1))
+
+bits_to_binary_like('334455')  # 11100
+```
+
 ### Model example
 ```python
 from typing import List, Optional
@@ -62,7 +76,7 @@ class Project(Supermodel):
 @app.get('/project/<id_>')
 async def project_get(request, id_):
     project = await Project.get(id_)
-    return json(project.to_dict())
+    return json(project)
 
 
 @app.post('/project')
