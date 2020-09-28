@@ -251,3 +251,15 @@ def test_recover():
     assert recover(b=1, a=2) == {'a': '2', 'b': '1', 'c': 0}
     assert recover(c=3, b=4, a=5) == {'a': '5', 'b': '4', 'c': 3}
     assert recover(b=6, d=7, c=8, a=9) == {'a': '9', 'b': '6', 'c': 8, 'd': 7.}
+
+
+def test_recover_default():
+    class Params(Model):
+        a = Attribute(str, default='a')
+        b = Attribute(str, default='b')
+
+    @fashionable
+    def recover_default(params: Params = Params()) -> dict:
+        return params.to_dict()
+
+    assert recover_default() == {'a': 'a', 'b': 'b'}
