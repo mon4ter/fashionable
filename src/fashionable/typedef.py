@@ -24,7 +24,10 @@ Ret = Union[T, AsyncRet]
 Args = Tuple[Value, ...]
 Kwargs = Dict[str, Value]
 
-if version_info >= (3, 7):
+
+if version_info >= (3, 9):
+    Typing = Union[type, type(Optional[int]).__base__.__base__, type(Any)]
+elif version_info >= (3, 7):
     Typing = Union[type, type(Union), type(Iterable)]
 else:
     Typing = Union[type, Type[Any], Type[Optional[T]], Type[Mapping], Type[Tuple]]
