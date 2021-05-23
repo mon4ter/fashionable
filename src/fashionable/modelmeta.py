@@ -28,8 +28,8 @@ class ModelMeta(type):
             attr.name = attr_name
             slots.append(attr.private_name)
 
-            if attr.name not in attributes:
-                attributes.append(attr.name)
+            if attr not in attributes:
+                attributes.append(attr)
 
         cls.__slots__ = tuple(slots)
         setattr(cls, '.attributes', tuple(attributes))

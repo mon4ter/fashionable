@@ -1,6 +1,6 @@
-from typing import Any, Optional
+from typing import Any, List, Optional
 
-from pytest import raises
+from pytest import mark, raises
 
 from fashionable import Attribute, UNSET, Unset
 
@@ -10,10 +10,32 @@ def test_name():
     a = Attribute(Any)
     a.name = name
     assert a.name == name
+    assert name in a.names
     assert a.private_name == '.' + name
 
     with raises(TypeError):
         Attribute(Any).name = 123
+
+
+@mark.parametrize('name,ci_names', [
+    ('someName', ['some-name', 'some_name', 'somename']),
+    ('SomeName', ['some-name', 'some_name', 'somename']),
+    ('some-name', ['some-name', 'some_name', 'somename']),
+    ('ABCSomeName', ['abc-some-name', 'abc_some_name', 'abcsomename']),
+])
+def test_ci_name(name: str, ci_names: List[str]):
+    a = Attribute(Any)
+    a.name = name
+    assert a.name == name
+    assert name in a.names
+    assert all(n in a.names for n in ci_names)
+
+
+def test_case_sensitive_name():
+    name = 'Case_Sensitive'
+    a = Attribute(Any, case_insensitive=False)
+    a.name = name
+    assert all(n not in a.names for n in ['CaseSensitive', 'Case-Sensitive', 'case_sensitive'])
 
 
 def test_without_parameters():

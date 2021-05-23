@@ -11,7 +11,7 @@ def test_attributes():
         a = Attribute(str)
         b = Attribute(str)
 
-    assert getattr(M, '.attributes') == ('a', 'b')
+    assert tuple(a.name for a in getattr(M, '.attributes')) == ('a', 'b')
 
 
 def test_attributes_inheritance():
@@ -31,10 +31,10 @@ def test_attributes_inheritance():
     class M5(M3):
         w = Attribute(str)
 
-    assert getattr(M2, '.attributes') == ('q', 'w', 'e')
-    assert getattr(M3, '.attributes') == ('q', 'w', 'e', 'r')
-    assert getattr(M4, '.attributes') == ('q', 'w', 'e')
-    assert getattr(M5, '.attributes') == ('q', 'w', 'e', 'r')
+    assert tuple(a.name for a in getattr(M2, '.attributes')) == ('q', 'w', 'e')
+    assert tuple(a.name for a in getattr(M3, '.attributes')) == ('q', 'w', 'e', 'r')
+    assert tuple(a.name for a in getattr(M4, '.attributes')) == ('q', 'w', 'e')
+    assert tuple(a.name for a in getattr(M5, '.attributes')) == ('q', 'w', 'e', 'r')
 
 
 def test_getter_setter():
@@ -254,7 +254,7 @@ def test_mixin():
         a = Attribute(int)
         b = Attribute(int)
 
-    assert getattr(M, '.attributes') == ('a', 'b')
+    assert tuple(a.name for a in getattr(M, '.attributes')) == ('a', 'b')
     assert bool(M(1, 2)) is False
 
 

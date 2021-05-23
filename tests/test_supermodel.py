@@ -188,6 +188,33 @@ async def test_update():
 
 
 @mark.asyncio
+async def test_ci_update():
+    # noinspection PyAbstractClass
+    class S(Supermodel):
+        some_attr = Attribute(str)
+        some_ci_attr = Attribute(str)
+
+        @staticmethod
+        async def _create(raw: dict):
+            return raw
+
+        @staticmethod
+        async def _get(id_: str) -> Optional[dict]:
+            pass
+
+        @staticmethod
+        async def _update(id_: str, raw: dict):
+            pass
+
+    s1 = await S.create('s1', 'foo')
+    await s1.update(someAttr='s0', SomeCIAttr='bar')
+    assert s1.some_attr == 's0'
+    assert s1.some_ci_attr == 'bar'
+    await s1.update(**{'some-ci-attr': 'baz'})
+    assert s1.some_ci_attr == 'baz'
+
+
+@mark.asyncio
 async def test_find():
     class SIter(AsyncIterator):
         def __init__(self, **kwargs):

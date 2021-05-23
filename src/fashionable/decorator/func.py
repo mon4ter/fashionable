@@ -1,6 +1,7 @@
 from asyncio import iscoroutine
 from functools import partial
 from inspect import Signature
+from logging import getLogger
 from typing import Callable, Dict, Optional, Tuple
 
 from .arg import Arg
@@ -12,6 +13,8 @@ from ..validation import validate
 __all__ = [
     'Func',
 ]
+
+logger = getLogger(__name__)
 
 
 class Func(Signature):
@@ -54,14 +57,18 @@ class Func(Signature):
     def _validate_arg(self, arg: Arg, value: Value) -> Value:
         if value is UNSET:
             if arg.default is Arg.empty:
-                raise MissingArgError(func=self._name, arg=arg.name)
+                err = MissingArgError(func=self._name, arg=arg.name)
+                logger.debug("%s: %s", self, err)
+                raise err
             else:
                 value = arg.default
         elif arg.annotation is not Arg.empty:
             try:
                 value = validate(arg.annotation, value)
             except ValidateError as exc:
-                raise InvalidArgError(func=self._name, arg=arg.name) from exc
+                err = InvalidArgError(func=self._name, arg=arg.name)
+                logger.debug("%s: %s: %s", self, err, exc)
+                raise err from exc
 
         return value
 
@@ -118,8 +125,10 @@ class Func(Signature):
         if self.return_annotation is not Signature.empty:
             try:
                 ret = validate(self.return_annotation, ret)
-            except ValidateError as err:
-                raise RetError(func=self._name) from err
+            except ValidateError as exc:
+                err = RetError(func=self._name)
+                logger.debug("%s: %s: %s", self, err, exc)
+                raise err from exc
 
         return ret
 
