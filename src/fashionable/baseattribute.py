@@ -22,7 +22,7 @@ class BaseAttribute:
             default: Value = UNSET,
             min: Limiter = UNSET,
             max: Limiter = UNSET,
-            case_insensitive: bool = True,
+            case_insensitive: bool = True
     ):
         self._type = None
         self._strict = None
