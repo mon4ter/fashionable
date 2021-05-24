@@ -45,6 +45,7 @@ def test_without_parameters():
     assert a.default is UNSET
     assert a.min is UNSET
     assert a.max is UNSET
+    assert a.case_insensitive is True
 
 
 def test_type():
@@ -105,7 +106,34 @@ def test_strict():
         Attribute(str, strict=5)
 
 
+def test_case_insensitive():
+    a = Attribute(Any)
+    a.name = 'some_name'
+    assert 'some-name' in a.names
+    a.case_insensitive = False
+    assert 'some-name' not in a.names
+
+    with raises(TypeError):
+        # noinspection PyTypeChecker
+        Attribute(str, case_insensitive='-')
+
+
 def test_unset():
     assert Unset() is UNSET
     assert Unset() is Unset()
     assert not UNSET
+
+
+def test_eq():
+    a1 = Attribute(Any)
+    a1.name = 'a'
+    a2 = Attribute(Any)
+    a2.name = 'a'
+    b = Attribute(Any)
+    b.name = 'b'
+    assert a1 == a2
+    assert hash(a1) == hash(a2)
+    assert a1 != b
+    assert hash(a1) != hash(b)
+    # noinspection PyTypeChecker
+    assert a1.__eq__('a') is NotImplemented

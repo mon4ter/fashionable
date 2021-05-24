@@ -18,7 +18,8 @@ class BaseAttribute:
     def __init__(
             self,
             type: Typing,
-            *, strict: bool = False,
+            *,
+            strict: bool = False,
             default: Value = UNSET,
             min: Limiter = UNSET,
             max: Limiter = UNSET,
