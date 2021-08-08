@@ -10,7 +10,6 @@ def test_name():
     a = Attribute(Any)
     a.name = name
     assert a.name == name
-    assert name in a.names
     assert a.private_name == '.' + name
 
     with raises(TypeError):
@@ -26,16 +25,14 @@ def test_name():
 def test_ci_name(name: str, ci_names: List[str]):
     a = Attribute(Any)
     a.name = name
+    cases = set(a.ciname.cases())
     assert a.name == name
-    assert name in a.names
-    assert all(n in a.names for n in ci_names)
+    assert all(n in cases for n in ci_names)
 
 
 def test_case_sensitive_name():
-    name = 'Case_Sensitive'
     a = Attribute(Any, case_insensitive=False)
-    a.name = name
-    assert all(n not in a.names for n in ['CaseSensitive', 'Case-Sensitive', 'case_sensitive'])
+    assert a.ciname is None
 
 
 def test_without_parameters():
@@ -109,9 +106,9 @@ def test_strict():
 def test_case_insensitive():
     a = Attribute(Any)
     a.name = 'some_name'
-    assert 'some-name' in a.names
+    assert 'some-name' in set(a.ciname.cases())
     a.case_insensitive = False
-    assert 'some-name' not in a.names
+    assert a.ciname is None
 
     with raises(TypeError):
         # noinspection PyTypeChecker

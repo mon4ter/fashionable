@@ -165,14 +165,10 @@ class Supermodel(Model, metaclass=SupermodelMeta):
         attributes = getattr(self, '.attributes')
         id_ = self._id()
         new = copy(self)
-        lower_raw = {k.lower(): v for k, v in raw.items()}
 
         for attr in attributes:
-            value = next((
-                raw.get(n, lower_raw[n])
-                for n in attr.names
-                if n in raw or n in lower_raw
-            ), None)
+            name = attr.ciname or attr.name
+            value = next((v for k, v in raw.items() if name == k), None)
 
             if value:
                 setattr(new, attr.name, value)
@@ -180,11 +176,8 @@ class Supermodel(Model, metaclass=SupermodelMeta):
         await self._update(id_, new.to_dict())
 
         for attr in attributes:
-            value = next((
-                raw.get(n, lower_raw[n])
-                for n in attr.names
-                if n in raw or n in lower_raw
-            ), None)
+            name = attr.ciname or attr.name
+            value = next((v for k, v in raw.items() if name == k), None)
 
             if value:
                 setattr(self, attr.name, value)

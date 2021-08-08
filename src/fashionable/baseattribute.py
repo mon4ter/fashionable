@@ -1,6 +1,6 @@
-from re import compile as re_compile
-from typing import Iterator, Tuple
+from typing import Optional
 
+from .cistr import CIStr
 from .errors import ValidateError
 from .typedef import Limiter, Typing, Value
 from .unset import UNSET
@@ -12,8 +12,6 @@ __all__ = [
 
 
 class BaseAttribute:
-    _word = re_compile(r'[A-Za-z]+?(?:(?=[-_])|(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|$)')
-
     # noinspection PyShadowingBuiltins
     def __init__(
             self,
@@ -31,7 +29,8 @@ class BaseAttribute:
         self._min = None
         self._max = None
         self._case_insensitive = None
-        self._names = None
+        self._name = None
+        self._ciname = None
         self._private_name = None
 
         self.type = type
@@ -138,34 +137,26 @@ class BaseAttribute:
 
         self._case_insensitive = value
 
-        if self.names:
+        if self.name is not None:
             self.name = self.name
 
     @property
     def name(self) -> str:
-        return self._names[0]
+        return self._name
 
     @name.setter
     def name(self, value: str):
         if not isinstance(value, str):
             raise TypeError("Invalid {}.name: must be a str, not {}".format(type(self).__name__, type(value).__name__))
 
-        self._names = tuple(self._make_names(value))
+        self._name = value
         self._private_name = '.' + value
+        self._ciname = CIStr(value) if self._case_insensitive else None
 
     @property
-    def names(self) -> Tuple[str]:
-        return self._names
+    def ciname(self) -> Optional[CIStr]:
+        return self._ciname
 
     @property
     def private_name(self) -> str:
         return self._private_name
-
-    def _make_names(self, name: str) -> Iterator[str]:
-        yield name
-
-        if self.case_insensitive:
-            words = self._word.findall(name)
-            yield '_'.join(w.lower() for w in words)
-            yield '-'.join(w.lower() for w in words)
-            yield ''.join(w.lower() for w in words)

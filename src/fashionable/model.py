@@ -29,14 +29,9 @@ class Model(metaclass=ModelMeta):
         for attr, value in zip(attributes, args):
             kwargs.setdefault(attr.name, value)
 
-        lower_kwargs = {k.lower(): v for k, v in kwargs.items()}
-
         for attr in attributes:
-            setattr(self, attr.name, next((
-                kwargs.get(n, lower_kwargs[n])
-                for n in attr.names
-                if n in kwargs or n in lower_kwargs
-            ), UNSET))
+            name = attr.ciname or attr.name
+            setattr(self, attr.name, next((v for k, v in kwargs.items() if name == k), UNSET))
 
     def __iter__(self):
         for attr in getattr(self, '.attributes'):
