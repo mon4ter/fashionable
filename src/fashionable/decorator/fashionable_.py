@@ -10,7 +10,7 @@ __all__ = [
 
 @overload
 def fashionable(func: Callable) -> Func:
-    ...
+    ...  # pragma: no cover
 
 
 @overload
@@ -19,7 +19,7 @@ def fashionable(
         case_insensitive_: bool = True,
         **annotations: Typing
 ) -> Callable[[Callable], Func]:
-    ...
+    ...  # pragma: no cover
 
 
 def fashionable(
