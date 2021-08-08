@@ -8,6 +8,13 @@ from pytest import mark, raises
 from fashionable import Attribute, InvalidArgError, MissingArgError, Model, RetError, fashionable
 
 
+def test_no_parenthesis():
+    def f():
+        pass
+
+    assert fashionable(f).func is fashionable()(f).func
+
+
 def test_empty():
     @fashionable
     def empty():
@@ -114,9 +121,6 @@ def test_complex_annotations():
     )
 
 
-# def test_model_in():
-
-
 def test_ret():
     @fashionable
     def ret() -> str:
@@ -182,7 +186,6 @@ def test_func():
 
     func = fashionable(orig)
 
-    # noinspection PyUnresolvedReferences
     assert func.func is orig
 
 
@@ -244,7 +247,6 @@ def test_recover():
     def recover(p: Params) -> dict:
         return p.to_dict()
 
-    # noinspection PyTypeChecker
     assert recover(1, 2) == {'a': '1', 'b': '2', 'c': 0}
     assert recover(3, 4, 5) == {'a': '3', 'b': '4', 'c': 5}
     assert recover(6, 7, 8, 9) == {'a': '6', 'b': '7', 'c': 8, 'd': 9.}
@@ -263,3 +265,30 @@ def test_recover_default():
         return params.to_dict()
 
     assert recover_default() == {'a': 'a', 'b': 'b'}
+
+
+def test_case_insensitivity():
+    @fashionable
+    def case_insensitivity(*, first_param: int, second_param: str) -> str:
+        return second_param * first_param
+
+    assert case_insensitivity(firstParam=2, SECOND_PARAM='a') == 'aa'
+    assert case_insensitivity(**{'first-param': 3, 'SECOND-PARAM': 'b'}) == 'bbb'
+
+
+def test_no_case_insensitivity():
+    @fashionable(case_insensitive_=False)
+    def no_case_insensitivity(*, first_param: int, second_param: str) -> str:
+        return second_param * first_param
+
+    with raises(MissingArgError):
+        no_case_insensitivity(firstParam=2, second_param='a')
+
+    with raises(MissingArgError):
+        no_case_insensitivity(first_param=2, SECOND_PARAM='a')
+
+    with raises(MissingArgError):
+        no_case_insensitivity(**{'first-param': 3, 'second_param': 'b'})
+
+    with raises(MissingArgError):
+        no_case_insensitivity(**{'first_param': 3, 'SECOND-PARAM': 'b'})
