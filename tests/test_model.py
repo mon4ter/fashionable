@@ -11,7 +11,7 @@ def test_attributes():
         a = Attribute(str)
         b = Attribute(str)
 
-    assert getattr(M, '.attributes') == ('a', 'b')
+    assert tuple(a.name for a in getattr(M, '.attributes')) == ('a', 'b')
 
 
 def test_attributes_inheritance():
@@ -31,10 +31,10 @@ def test_attributes_inheritance():
     class M5(M3):
         w = Attribute(str)
 
-    assert getattr(M2, '.attributes') == ('q', 'w', 'e')
-    assert getattr(M3, '.attributes') == ('q', 'w', 'e', 'r')
-    assert getattr(M4, '.attributes') == ('q', 'w', 'e')
-    assert getattr(M5, '.attributes') == ('q', 'w', 'e', 'r')
+    assert tuple(a.name for a in getattr(M2, '.attributes')) == ('q', 'w', 'e')
+    assert tuple(a.name for a in getattr(M3, '.attributes')) == ('q', 'w', 'e', 'r')
+    assert tuple(a.name for a in getattr(M4, '.attributes')) == ('q', 'w', 'e')
+    assert tuple(a.name for a in getattr(M5, '.attributes')) == ('q', 'w', 'e', 'r')
 
 
 def test_getter_setter():
@@ -195,14 +195,14 @@ def test_iter():
         foo = Attribute(str)
         bar = Attribute(Optional[str])
 
-    assert dict(M1('a', 'b')) == {'foo': 'a', 'bar': 'b'}
-    assert dict(M1('a')) == {'foo': 'a'}
+    assert M1('a', 'b').to_dict() == {'foo': 'a', 'bar': 'b'}
+    assert M1('a').to_dict() == {'foo': 'a'}
 
     class M2(Model):
         m = Attribute(M1)
         baz = Attribute(str)
 
-    assert dict(M2(M1('1'), '2')) == {'m': M1('1'), 'baz': '2'}
+    assert M2(M1('1'), '2').to_dict() == {'m': {'foo': '1'}, 'baz': '2'}
 
 
 def test_id():
@@ -254,7 +254,7 @@ def test_mixin():
         a = Attribute(int)
         b = Attribute(int)
 
-    assert getattr(M, '.attributes') == ('a', 'b')
+    assert tuple(a.name for a in getattr(M, '.attributes')) == ('a', 'b')
     assert bool(M(1, 2)) is False
 
 
@@ -322,8 +322,8 @@ def test_unknown_attribute_ignorance():
         a = Attribute(int)
         b = Attribute(int)
 
-    assert dict(M(3, 4, 5)) == {'a': 3, 'b': 4}
-    assert dict(M(a=5, c=6, b=7, d=7)) == {'a': 5, 'b': 7}
+    assert M(3, 4, 5).to_dict() == {'a': 3, 'b': 4}
+    assert M(a=5, c=6, b=7, d=7).to_dict() == {'a': 5, 'b': 7}
 
 
 def test_case_insensitivity():
@@ -331,17 +331,17 @@ def test_case_insensitivity():
         someAttr = Attribute(str)
         OTHER_ATTR = Attribute(str)
 
-    assert dict(M(someattr='1', other_attr='2')) == {'someAttr': '1', 'OTHER_ATTR': '2'}
-    assert dict(M(SOMEATTR='3', OtHeR_aTtR='4')) == {'someAttr': '3', 'OTHER_ATTR': '4'}
+    assert M(someattr='1', other_attr='2').to_dict() == {'someAttr': '1', 'OTHER_ATTR': '2'}
+    assert M(SOMEATTR='3', OtHeR_aTtR='4').to_dict() == {'someAttr': '3', 'OTHER_ATTR': '4'}
 
 
 def test_implicit_none():
     class M(Model):
         a = Attribute(Optional[int])
 
-    assert dict(M(1)) == {'a': 1}
-    assert dict(M(None)) == {'a': None}
-    assert dict(M()) == {}
+    assert M(1).to_dict() == {'a': 1}
+    assert M(None).to_dict() == {'a': None}
+    assert M().to_dict() == {}
 
 
 def test_delete_attribute():
@@ -398,6 +398,7 @@ def test_to_dict():
         def __init__(self, x):
             self.x = x
 
+        # noinspection PyPep8Naming
         @staticmethod
         def toDict() -> dict:
             return {'foo': 1, 'bar': 3}

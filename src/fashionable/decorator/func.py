@@ -1,17 +1,21 @@
 from asyncio import iscoroutine
 from functools import partial
 from inspect import Signature
+from logging import getLogger
 from typing import Callable, Dict, Optional, Tuple
 
 from .arg import Arg
+from ..cistr import CIStr
 from ..errors import ArgError, InvalidArgError, MissingArgError, RetError, ValidateError
-from ..typedef import Args, AsyncRet, Kwargs, Ret, Typing, Value, Predefined
+from ..typedef import Args, AsyncRet, Kwargs, Predefined, Ret, Typing, Value
 from ..unset import UNSET
 from ..validation import validate
 
 __all__ = [
     'Func',
 ]
+
+logger = getLogger(__name__)
 
 
 class Func(Signature):
@@ -20,7 +24,13 @@ class Func(Signature):
     _parameter_cls = Arg
 
     @classmethod
-    def fashionable(cls, func: Callable, name: Optional[str], annotations: Dict[str, Typing]) -> 'Func':
+    def fashionable(
+            cls,
+            func: Callable,
+            name: Optional[str],
+            case_insensitive: bool,
+            annotations: Dict[str, Typing]
+    ) -> 'Func':
         if not name:
             name = func.__name__
 
@@ -30,6 +40,9 @@ class Func(Signature):
 
         for parameter in self.parameters.values():
             parameter._annotation = annotations.get(parameter.name, parameter.annotation)
+
+            if case_insensitive:
+                parameter._ciname = CIStr(parameter.name)
 
         self._return_annotation = annotations.get('return_', self.return_annotation)
 
@@ -54,14 +67,18 @@ class Func(Signature):
     def _validate_arg(self, arg: Arg, value: Value) -> Value:
         if value is UNSET:
             if arg.default is Arg.empty:
-                raise MissingArgError(func=self._name, arg=arg.name)
+                err = MissingArgError(func=self._name, arg=arg.name)
+                logger.debug("%s: %s", self, err)
+                raise err
             else:
                 value = arg.default
         elif arg.annotation is not Arg.empty:
             try:
                 value = validate(arg.annotation, value)
             except ValidateError as exc:
-                raise InvalidArgError(func=self._name, arg=arg.name) from exc
+                err = InvalidArgError(func=self._name, arg=arg.name)
+                logger.debug("%s: %s: %s", self, err, exc)
+                raise err from exc
 
         return value
 
@@ -86,25 +103,31 @@ class Func(Signature):
 
                 continue
 
-            name = arg.name
             value = predefined.get(arg.annotation, UNSET)
 
             if value is UNSET:
+                name = arg.ciname or arg.name
+
                 try:
-                    value = self._validate_arg(
-                        arg,
-                        dict_params.pop(name) if name in dict_params else list_params.pop(0) if list_params else UNSET
-                    )
-                except ArgError:
+                    raw_value = next(dict_params.pop(p) for p in dict_params if name == p)
+                except StopIteration:
+                    raw_value = list_params.pop(0) if list_params else UNSET
+
+                try:
+                    value = self._validate_arg(arg, raw_value)
+                except ArgError as err:
                     if recover_allowed and (args or kwargs):
-                        value = self._validate_arg(arg, (args, kwargs))
+                        try:
+                            value = self._validate_arg(arg, (args, kwargs))
+                        except ArgError:
+                            raise err
                     else:
-                        raise
+                        raise err
 
             if arg.is_positional:
                 new_args.append(value)
             else:
-                new_kwargs[name] = value
+                new_kwargs[arg.name] = value
 
             recover_allowed = False
 
@@ -118,8 +141,10 @@ class Func(Signature):
         if self.return_annotation is not Signature.empty:
             try:
                 ret = validate(self.return_annotation, ret)
-            except ValidateError as err:
-                raise RetError(func=self._name) from err
+            except ValidateError as exc:
+                err = RetError(func=self._name)
+                logger.debug("%s: %s: %s", self, err, exc)
+                raise err from exc
 
         return ret
 

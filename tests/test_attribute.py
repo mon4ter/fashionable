@@ -1,6 +1,6 @@
-from typing import Any, Optional
+from typing import Any, List, Optional
 
-from pytest import raises
+from pytest import mark, raises
 
 from fashionable import Attribute, UNSET, Unset
 
@@ -16,6 +16,25 @@ def test_name():
         Attribute(Any).name = 123
 
 
+@mark.parametrize('name,ci_names', [
+    ('someName', ['some-name', 'some_name', 'somename']),
+    ('SomeName', ['some-name', 'some_name', 'somename']),
+    ('some-name', ['some-name', 'some_name', 'somename']),
+    ('ABCSomeName', ['abc-some-name', 'abc_some_name', 'abcsomename']),
+])
+def test_ci_name(name: str, ci_names: List[str]):
+    a = Attribute(Any)
+    a.name = name
+    cases = set(a.ciname.cases())
+    assert a.name == name
+    assert all(n in cases for n in ci_names)
+
+
+def test_case_sensitive_name():
+    a = Attribute(Any, case_insensitive=False)
+    assert a.ciname is None
+
+
 def test_without_parameters():
     a = Attribute(Any)
     assert a.type is Any
@@ -23,6 +42,7 @@ def test_without_parameters():
     assert a.default is UNSET
     assert a.min is UNSET
     assert a.max is UNSET
+    assert a.case_insensitive is True
 
 
 def test_type():
@@ -83,7 +103,34 @@ def test_strict():
         Attribute(str, strict=5)
 
 
+def test_case_insensitive():
+    a = Attribute(Any)
+    a.name = 'some_name'
+    assert 'some-name' in set(a.ciname.cases())
+    a.case_insensitive = False
+    assert a.ciname is None
+
+    with raises(TypeError):
+        # noinspection PyTypeChecker
+        Attribute(str, case_insensitive='-')
+
+
 def test_unset():
     assert Unset() is UNSET
     assert Unset() is Unset()
     assert not UNSET
+
+
+def test_eq():
+    a1 = Attribute(Any)
+    a1.name = 'a'
+    a2 = Attribute(Any)
+    a2.name = 'a'
+    b = Attribute(Any)
+    b.name = 'b'
+    assert a1 == a2
+    assert hash(a1) == hash(a2)
+    assert a1 != b
+    assert hash(a1) != hash(b)
+    # noinspection PyTypeChecker
+    assert a1.__eq__('a') is NotImplemented

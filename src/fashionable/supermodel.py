@@ -167,14 +167,20 @@ class Supermodel(Model, metaclass=SupermodelMeta):
         new = copy(self)
 
         for attr in attributes:
-            if attr in raw:
-                setattr(new, attr, raw[attr])
+            name = attr.ciname or attr.name
+            value = next((v for k, v in raw.items() if name == k), None)
+
+            if value:
+                setattr(new, attr.name, value)
 
         await self._update(id_, new.to_dict())
 
         for attr in attributes:
-            if attr in raw:
-                setattr(self, attr, raw[attr])
+            name = attr.ciname or attr.name
+            value = next((v for k, v in raw.items() if name == k), None)
+
+            if value:
+                setattr(self, attr.name, value)
 
         self._cache(id_, self)
 

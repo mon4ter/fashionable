@@ -30,7 +30,7 @@ class Attribute(BaseAttribute):
                 else:
                     err_type = ModelTypeError
 
-                raise err_type(model=type(model).__name__, attr=self._name) from exc
+                raise err_type(model=type(model).__name__, attr=self.name) from exc
 
         iterable = hasattr(value, '__iter__')
 
@@ -38,7 +38,7 @@ class Attribute(BaseAttribute):
             raise ModelValueError(
                 "{}should be >= %(min)s".format('length ' * iterable),
                 model=type(model).__name__,
-                attr=self._name,
+                attr=self.name,
                 min=self._min,
             )
 
@@ -46,7 +46,7 @@ class Attribute(BaseAttribute):
             raise ModelValueError(
                 "{}should be <= %(max)s".format('length ' * iterable),
                 model=type(model).__name__,
-                attr=self._name,
+                attr=self.name,
                 max=self._max,
             )
 

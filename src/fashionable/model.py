@@ -27,19 +27,18 @@ class Model(metaclass=ModelMeta):
         attributes = getattr(self, '.attributes')
 
         for attr, value in zip(attributes, args):
-            kwargs.setdefault(attr, value)
-
-        lower_kwargs = {k.lower(): v for k, v in kwargs.items()}
+            kwargs.setdefault(attr.name, value)
 
         for attr in attributes:
-            setattr(self, attr, kwargs.get(attr, lower_kwargs.get(attr.lower(), UNSET)))
+            name = attr.ciname or attr.name
+            setattr(self, attr.name, next((v for k, v in kwargs.items() if name == k), UNSET))
 
     def __iter__(self):
         for attr in getattr(self, '.attributes'):
-            value = getattr(self, attr)
+            value = getattr(self, attr.name)
 
             if value is not UNSET:
-                yield attr, value
+                yield attr.name, value
 
     def __eq__(self, other: Union['Model', Mapping, Iterable, Tuple]):
         if not isinstance(other, type(self)):
@@ -48,7 +47,7 @@ class Model(metaclass=ModelMeta):
             except ValidateError:
                 return NotImplemented
 
-        return all(getattr(other, attr) == getattr(self, attr) for attr in getattr(self, '.attributes'))
+        return all(getattr(other, attr.name) == getattr(self, attr.name) for attr in getattr(self, '.attributes'))
 
     def __str__(self):
         return '{}({})'.format(type(self).__name__, self._id())
@@ -63,7 +62,7 @@ class Model(metaclass=ModelMeta):
         return type(self)(**{k: deepcopy(v) for k, v in self})
 
     def _id(self):
-        return getattr(self, getattr(self, '.attributes')[0])
+        return getattr(self, getattr(self, '.attributes')[0].name)
 
     def to_dict(self) -> Dict[str, Any]:
         return {n: self._to_dict(v) for n, v in self}

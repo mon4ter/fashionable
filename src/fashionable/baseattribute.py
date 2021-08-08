@@ -1,5 +1,8 @@
+from typing import Optional
+
+from .cistr import CIStr
 from .errors import ValidateError
-from .typedef import Limiter as L, Typing, Value as V
+from .typedef import Limiter, Typing, Value
 from .unset import UNSET
 from .validation import validate
 
@@ -10,13 +13,24 @@ __all__ = [
 
 class BaseAttribute:
     # noinspection PyShadowingBuiltins
-    def __init__(self, type: Typing, *, strict: bool = False, default: V = UNSET, min: L = UNSET, max: L = UNSET):
+    def __init__(
+            self,
+            type: Typing,
+            *,
+            strict: bool = False,
+            default: Value = UNSET,
+            min: Limiter = UNSET,
+            max: Limiter = UNSET,
+            case_insensitive: bool = True
+    ):
         self._type = None
         self._strict = None
         self._default = None
         self._min = None
         self._max = None
+        self._case_insensitive = None
         self._name = None
+        self._ciname = None
         self._private_name = None
 
         self.type = type
@@ -24,6 +38,16 @@ class BaseAttribute:
         self.min = min
         self.max = max
         self.default = default
+        self.case_insensitive = case_insensitive
+
+    def __hash__(self) -> int:
+        return hash(self.name)
+
+    def __eq__(self, other: 'BaseAttribute') -> bool:
+        if not isinstance(other, type(self)):
+            return NotImplemented
+
+        return hash(self) == hash(other)
 
     @property
     def type(self) -> Typing:
@@ -52,11 +76,11 @@ class BaseAttribute:
         self._strict = value
 
     @property
-    def default(self) -> V:
+    def default(self) -> Value:
         return self._default
 
     @default.setter
-    def default(self, value: V):
+    def default(self, value: Value):
         if value is not UNSET:
             try:
                 value = validate(self.type, value, self.strict)
@@ -73,11 +97,11 @@ class BaseAttribute:
         self._default = value
 
     @property
-    def min(self) -> L:
+    def min(self) -> Limiter:
         return self._min
 
     @min.setter
-    def min(self, value: L):
+    def min(self, value: Limiter):
         if value is not UNSET:
             try:
                 value < value
@@ -87,11 +111,11 @@ class BaseAttribute:
         self._min = value
 
     @property
-    def max(self) -> L:
+    def max(self) -> Limiter:
         return self._max
 
     @max.setter
-    def max(self, value: L):
+    def max(self, value: Limiter):
         if value is not UNSET:
             try:
                 value > value
@@ -99,6 +123,22 @@ class BaseAttribute:
                 raise TypeError("Invalid {}.max: {}".format(type(self).__name__, exc)) from exc
 
         self._max = value
+
+    @property
+    def case_insensitive(self) -> bool:
+        return self._case_insensitive
+
+    @case_insensitive.setter
+    def case_insensitive(self, value: bool):
+        if not isinstance(value, bool):
+            raise TypeError(
+                "Invalid {}.case_insensitive: must be a bool, not {}".format(type(self).__name__, type(value).__name__)
+            )
+
+        self._case_insensitive = value
+
+        if self.name is not None:
+            self.name = self.name
 
     @property
     def name(self) -> str:
@@ -111,6 +151,11 @@ class BaseAttribute:
 
         self._name = value
         self._private_name = '.' + value
+        self._ciname = CIStr(value) if self._case_insensitive else None
+
+    @property
+    def ciname(self) -> Optional[CIStr]:
+        return self._ciname
 
     @property
     def private_name(self) -> str:

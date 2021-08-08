@@ -1,5 +1,6 @@
 from functools import lru_cache
 from itertools import chain, product, repeat
+from logging import getLogger
 from typing import Any, Dict, Iterable, List, Mapping, Set, Tuple, Type, Union
 
 from .errors import ValidateError
@@ -10,6 +11,7 @@ __all__ = [
     'validate',
 ]
 
+logger = getLogger(__name__)
 NoneType = type(None)
 
 
@@ -122,5 +124,7 @@ def _validate(typ: Typing, value: Any, strict: bool) -> Any:
 def validate(typ: Typing, value: Any, strict: bool = False) -> Any:
     try:
         return _validate(typ, value, strict)
-    except TypeError as err:
-        raise TypeError("must be {}, not {}".format(typ, type(value))) from err
+    except TypeError as exc:
+        err = TypeError("must be {}, not {}".format(typ, type(value)))
+        logger.debug("%s(%s, %s, %s): %s", validate.__name__, typ, value, strict, exc)
+        raise err from exc
