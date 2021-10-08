@@ -17,10 +17,10 @@ def test_name():
 
 
 @mark.parametrize('name,ci_names', [
-    ('someName', ['some-name', 'some_name', 'somename']),
-    ('SomeName', ['some-name', 'some_name', 'somename']),
-    ('some-name', ['some-name', 'some_name', 'somename']),
-    ('ABCSomeName', ['abc-some-name', 'abc_some_name', 'abcsomename']),
+    ('someName', ['some_name', 'some-name', 'someName']),
+    ('SomeName', ['some_name', 'some-name', 'someName']),
+    ('some-name', ['some_name', 'some-name', 'someName']),
+    ('ABCSomeName', ['abc_some_name', 'abc-some-name', 'abcSomeName']),
 ])
 def test_ci_name(name: str, ci_names: List[str]):
     a = Attribute(Any)

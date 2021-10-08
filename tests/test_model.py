@@ -331,8 +331,8 @@ def test_case_insensitivity():
         someAttr = Attribute(str)
         OTHER_ATTR = Attribute(str)
 
-    assert M(someattr='1', other_attr='2').to_dict() == {'someAttr': '1', 'OTHER_ATTR': '2'}
-    assert M(SOMEATTR='3', OtHeR_aTtR='4').to_dict() == {'someAttr': '3', 'OTHER_ATTR': '4'}
+    assert M(someATTR='1', other_attr='2').to_dict() == {'someAttr': '1', 'OTHER_ATTR': '2'}
+    assert M(SOME_attr='3', OtherAttr='4').to_dict() == {'someAttr': '3', 'OTHER_ATTR': '4'}
 
 
 def test_implicit_none():
