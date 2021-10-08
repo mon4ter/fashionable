@@ -1,4 +1,5 @@
 from copy import deepcopy
+from itertools import zip_longest
 from typing import Any, Dict, Iterable, Mapping, Tuple, Union
 
 from .errors import ValidateError
@@ -47,7 +48,7 @@ class Model(metaclass=ModelMeta):
             except ValidateError:
                 return NotImplemented
 
-        return all(getattr(other, attr.name) == getattr(self, attr.name) for attr in getattr(self, '.attributes'))
+        return all(s == o for s, o in zip_longest(iter(self), iter(other), fillvalue=object()))
 
     def __str__(self):
         return '{}({})'.format(type(self).__name__, self._id())
