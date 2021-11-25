@@ -1,3 +1,4 @@
+dist: focal
 language: python
 python:
   - '3.5'
@@ -5,8 +6,7 @@ python:
   - '3.7'
   - '3.8'
   - '3.9'
-#  - '3.10-dev'
-#  - 'nightly'
+  - '3.10.0'
 install:
   - pip install -r requirements.txt
   - pip install codecov
@@ -21,5 +21,5 @@ deploy:
     secure: 'EzDgejBzfzuBTiBhzmdBgAnExjAhKiI283u1UKMtCTLhl9p63o4IFIoiEJZJU0yzhxPQFzOljdfyXTKJgHbGuTgfDlkY+rpLX69BEYtaqtacUST6NzGXrtVLj5WRRqhkY2cJ4/K2bOfbn2beKsWTT+1zMJAi/kYYv5F46tVk74gJlgvt7S//doN/2AzGwv3leqWjlHt1GTHvqqJRCAmkj7wBNADXC2chcdvYc0Zn510Ic67c9yq8cCUn/UiimYKYbs/73ojFMebIG7QRG49t86rcj4zwVzqZ+RWp85M+iWePdCMUWccH1wDRzBv9I8QTHNLdLU6S1bBQ9+OKjHHn+MgkN676OZDSFgj+OFA6GXqTEiFQ6qqnB8BLFLYWWdAOUAlNUEOfB2kUQ8z/a5beWJpRTpxy0YH7FWN/UnZtjvZnNzKy/+/AdoZ1rBknDj1YgFgOxrskwYuTSBoEPVitlX0WdtmPplYPFAoE/rSAZ73aAFyoY4TSZuuOlpyij9RYsdhs46HmQcfdwBYuXOcZEZz/IQcVbfbKoVr+fUNiMdRNZnU4VScc9ESZKk2v0VZOA61n9qHaHFW6ingYMgEFBtGAKTiqevKXUgUwp3tRvov1Qha7dBHZqNOui1KuksEsH7BQOhcHqgPmdNbLKwGOyz3ewiw+3HQqXzsKksY2rqI='
   on:
     tags: true
-    python: '3.9'
+    python: '3.10.0'
   distributions: 'sdist bdist_wheel'

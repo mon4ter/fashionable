@@ -22,4 +22,4 @@ __all__ = [
     *validation.__all__,
 ]
 
-__version__ = '0.12.2'
+__version__ = '0.12.3'
